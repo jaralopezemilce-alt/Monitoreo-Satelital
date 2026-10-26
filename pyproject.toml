@@ -1,0 +1,13 @@
+[project]
+name = "chaco-monitor"
+version = "0.1.0"
+description = "Monitoreo académico de pérdida de cobertura boscosa en el Chaco paraguayo"
+requires-python = ">=3.12,<3.13"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

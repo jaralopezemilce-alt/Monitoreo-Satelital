@@ -1,0 +1,8 @@
+# Entorno reproducible de la fase 1: Python 3.12.
+# Torch/FastAPI/interfaz se fijarán y probarán cuando se aprueben esas fases.
+numpy==2.2.6
+rasterio==1.4.3
+pyproj==3.7.1
+requests==2.32.4
+Pillow==11.3.0
+pytest==8.4.1

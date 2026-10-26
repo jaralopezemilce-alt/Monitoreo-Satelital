@@ -1,0 +1,43 @@
+# Entornos, secretos y archivos del sistema.
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Datos y resultados grandes: compartir por Drive/Kaggle con manifiesto SHA-256.
+data/raw/*
+data/interim/*
+data/processed/*
+models/*
+outputs/*
+!**/.gitkeep
+*.tif
+*.tiff
+*.jp2
+*.npy
+*.npz
+*.pt
+*.pth
+*.onnx
+*.ckpt
+*.zip
+*.tar
+*.gz
+*.parquet
+
+# Construcción y cobertura.
+build/
+dist/
+*.egg-info/
+.coverage
+htmlcov/
