@@ -10,6 +10,10 @@ La prospección utilizó `sentinel-2-l2a` para 2022 y `sentinel-2-c1-l2a` para 2
 
 Antes de entrenar, hay que leer las escalas, offsets y metadatos de cada asset y llevar todas las bandas a reflectancia comparable. No suponer que los DN de estos archivos son directamente equivalentes a la colección armonizada de Earth Engine, cuya corrección radiométrica está documentada por separado ([catálogo armonizado](https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_S2_SR_HARMONIZED)).
 
+En la ingesta se comprobó que los items de 2022 llevan `earthsearch:boa_offset_applied=true`: se aplica escala 0,0001 y offset efectivo 0. Para los items C1 de 2023/2026 se aplica la escala 0,0001 y offset −0,1; esta diferencia entre colecciones está explicada por el proveedor ([aclaración de Earth Search](https://github.com/Element84/earth-search/issues/41)).
+
+El primer ensayo que aplicaba el offset declarado a todos los archivos produjo valores negativos y fue descartado; se corrigió la regla y se regeneraron todas las salidas. El manifiesto conserva tanto el metadato original como la radiometría efectiva y las pruebas incluyen esta regresión.
+
 Las miniaturas RGB se usaron sólo para inspección. El modelo debe consumir reflectancia multiespectral, no JPEG ni RGB de visualización.
 
 La licencia de datos Sentinel permite acceso libre y abierto y exige atribución de los derivados mediante “Contains modified Copernicus Sentinel data [Year]” ([aviso legal](https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice)). Las miniaturas incluidas contienen datos Sentinel modificados de 2022, 2023 y 2026.
