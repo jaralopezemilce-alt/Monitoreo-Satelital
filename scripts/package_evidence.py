@@ -43,6 +43,14 @@ def main() -> None:
         })
     config = args.repo / "configs"
     config.mkdir(exist_ok=True)
+    # Repetir la prospección no puede revocar una aprobación del usuario.
+    existing_path = config / "candidate_zones.geojson"
+    if existing_path.exists():
+        previous = json.loads(existing_path.read_text())["features"]
+        decisions = {f["properties"]["id"]:f["properties"] for f in previous}
+        for feature in features:
+            if feature["properties"]["id"] in decisions:
+                feature["properties"].update(decisions[feature["properties"]["id"]])
     (config / "candidate_zones.geojson").write_text(
         json.dumps({"type":"FeatureCollection", "features":features}, indent=2),
         encoding="utf-8",

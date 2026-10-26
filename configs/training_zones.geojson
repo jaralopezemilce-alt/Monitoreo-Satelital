@@ -1,0 +1,109 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "A_boqueron",
+        "status": "approved",
+        "approved_date": "2026-10-26",
+        "target_crs": "EPSG:32720",
+        "purpose": "historical_training_inputs_no_labels_yet",
+        "grid": {
+          "transform": [
+            10,
+            0,
+            744980,
+            0,
+            -10,
+            7591690
+          ],
+          "shape": [
+            1000,
+            1000
+          ]
+        },
+        "area_km2_projected": 100
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -60.62959005401191,
+              -21.85179658328102
+            ],
+            [
+              -60.53289777384621,
+              -21.850377431362247
+            ],
+            [
+              -60.53444424761098,
+              -21.760113726724803
+            ],
+            [
+              -60.631076058446894,
+              -21.76152643122286
+            ],
+            [
+              -60.62959005401191,
+              -21.85179658328102
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "B_alto_paraguay",
+        "status": "approved",
+        "approved_date": "2026-10-26",
+        "target_crs": "EPSG:32721",
+        "purpose": "historical_training_inputs_no_labels_yet",
+        "grid": {
+          "transform": [
+            10,
+            0,
+            244250,
+            0,
+            -10,
+            7752520
+          ],
+          "shape": [
+            1000,
+            1000
+          ]
+        },
+        "area_km2_projected": 100
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -59.450563077448294,
+              -20.39843294202818
+            ],
+            [
+              -59.35480640739061,
+              -20.39975336360431
+            ],
+            [
+              -59.353437478204924,
+              -20.30946677884082
+            ],
+            [
+              -59.44913861470661,
+              -20.308152704147844
+            ],
+            [
+              -59.450563077448294,
+              -20.39843294202818
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
