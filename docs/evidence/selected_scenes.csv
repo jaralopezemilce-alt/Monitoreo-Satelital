@@ -1,0 +1,13 @@
+candidate,role,id,datetime,cloud_scene_pct,scl_cloud_shadow_aoi_pct,scl_invalid_conservative_aoi_pct,item_url
+A_boqueron,historical_2022_0,S2A_20KQA_20221021_0_L2A,2022-10-21T14:18:51Z,0.004628,0.0,0.0,https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a/items/S2A_20KQA_20221021_0_L2A
+A_boqueron,historical_2023_1,S2B_T20KQA_20230921T141111_L2A,2023-09-21T14:18:52.869000Z,0.003142,0.0,0.0,https://earth-search.aws.element84.com/v1/collections/sentinel-2-c1-l2a/items/S2B_T20KQA_20230921T141111_L2A
+A_boqueron,recent_2026_2,S2A_T20KQA_20260505T141503_L2A,2026-05-05T14:19:02.074000Z,0.010352,0.0,0.0,https://earth-search.aws.element84.com/v1/collections/sentinel-2-c1-l2a/items/S2A_T20KQA_20260505T141503_L2A
+A_boqueron,recent_2026_3,S2C_T20KQA_20260920T141014_L2A,2026-09-20T14:18:49.175000Z,0.001573,0.0,0.0,https://earth-search.aws.element84.com/v1/collections/sentinel-2-c1-l2a/items/S2C_T20KQA_20260920T141014_L2A
+B_alto_paraguay,historical_2022_0,S2A_21KTT_20221001_0_L2A,2022-10-01T14:18:23.022000Z,0.004246,0.0,0.0,https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a/items/S2A_21KTT_20221001_0_L2A
+B_alto_paraguay,historical_2023_1,S2A_T21KTT_20230916T141715_L2A,2023-09-16T14:18:19.370000Z,0.003373,0.0,0.012,https://earth-search.aws.element84.com/v1/collections/sentinel-2-c1-l2a/items/S2A_T21KTT_20230916T141715_L2A
+B_alto_paraguay,recent_2026_2,S2A_T20KRC_20260505T141503_L2A,2026-05-05T14:18:29.473000Z,0.002422,0.0,0.036,https://earth-search.aws.element84.com/v1/collections/sentinel-2-c1-l2a/items/S2A_T20KRC_20260505T141503_L2A
+B_alto_paraguay,recent_2026_3,S2A_T21KTT_20260902T141321_L2A,2026-09-02T14:18:30.689000Z,0.002232,0.0,0.015,https://earth-search.aws.element84.com/v1/collections/sentinel-2-c1-l2a/items/S2A_T21KTT_20260902T141321_L2A
+C_presidente_hayes,historical_2022_0,S2B_21KTQ_20221023_0_L2A,2022-10-23T14:09:03.647000Z,0.004484,0.077,0.077,https://earth-search.aws.element84.com/v1/collections/sentinel-2-l2a/items/S2B_21KTQ_20221023_0_L2A
+C_presidente_hayes,historical_2023_1,S2A_T21KTQ_20231003T135802_L2A,2023-10-03T14:09:05.964000Z,0.241159,0.0,0.018,https://earth-search.aws.element84.com/v1/collections/sentinel-2-c1-l2a/items/S2A_T21KTQ_20231003T135802_L2A
+C_presidente_hayes,recent_2026_2,S2B_T20KRV_20260505T140810_L2A,2026-05-05T14:09:01.443000Z,0.002629,0.0,0.0,https://earth-search.aws.element84.com/v1/collections/sentinel-2-c1-l2a/items/S2B_T20KRV_20260505T140810_L2A
+C_presidente_hayes,recent_2026_3,S2C_T21KTQ_20260927T140011_L2A,2026-09-27T14:09:05.315000Z,0.001684,0.0,0.015,https://earth-search.aws.element84.com/v1/collections/sentinel-2-c1-l2a/items/S2C_T21KTQ_20260927T140011_L2A

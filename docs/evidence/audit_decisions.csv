@@ -1,0 +1,19 @@
+sample_id,year,decision,reason,reviewer,independent_review_pending
+A_boqueron_07,2023,uncertain,Retained strip or intersection with mixed pixels,assistant,true
+A_boqueron_08,2023,compatible,Visible opening inside a parcel,assistant,true
+A_boqueron_09,2023,compatible,Visible opening inside a parcel,assistant,true
+A_boqueron_10,2023,uncertain,Center on retained dark strip,assistant,true
+A_boqueron_11,2023,uncertain,Center on retained dark strip,assistant,true
+A_boqueron_12,2023,uncertain,Retained strip near road or mixed edge,assistant,true
+B_alto_paraguay_07,2023,uncertain,Strip road or mixed boundary,assistant,true
+B_alto_paraguay_08,2023,compatible,Visible opening inside a parcel,assistant,true
+B_alto_paraguay_09,2023,compatible,Visible opening south of retained strip,assistant,true
+B_alto_paraguay_10,2023,uncertain,Strip road or mixed boundary,assistant,true
+B_alto_paraguay_11,2023,compatible,Visible opening inside a parcel,assistant,true
+B_alto_paraguay_12,2023,uncertain,Road intersection and mixed boundary,assistant,true
+C_presidente_hayes_07,2023,uncertain,Boundary near retained vegetation,assistant,true
+C_presidente_hayes_08,2023,compatible,Visible opening and parallel clearing pattern,assistant,true
+C_presidente_hayes_09,2023,uncertain,Vegetation remains at or near center,assistant,true
+C_presidente_hayes_10,2023,compatible,Visible opening and parallel clearing pattern,assistant,true
+C_presidente_hayes_11,2023,compatible,Visible opening and parallel clearing pattern,assistant,true
+C_presidente_hayes_12,2023,uncertain,No unequivocal removal at center,assistant,true

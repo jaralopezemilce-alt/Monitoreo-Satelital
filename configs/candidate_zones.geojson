@@ -1,0 +1,107 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "A_boqueron",
+        "status": "candidate_not_approved"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -60.6,
+              -21.824
+            ],
+            [
+              -60.564,
+              -21.824
+            ],
+            [
+              -60.564,
+              -21.788
+            ],
+            [
+              -60.6,
+              -21.788
+            ],
+            [
+              -60.6,
+              -21.824
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "B_alto_paraguay",
+        "status": "candidate_not_approved"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -59.42,
+              -20.372
+            ],
+            [
+              -59.384,
+              -20.372
+            ],
+            [
+              -59.384,
+              -20.336000000000002
+            ],
+            [
+              -59.42,
+              -20.336000000000002
+            ],
+            [
+              -59.42,
+              -20.372
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "C_presidente_hayes",
+        "status": "candidate_not_approved"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -59.212,
+              -23.352
+            ],
+            [
+              -59.176,
+              -23.352
+            ],
+            [
+              -59.176,
+              -23.316000000000003
+            ],
+            [
+              -59.212,
+              -23.316000000000003
+            ],
+            [
+              -59.212,
+              -23.352
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "inspection_date": "2026-10-26",
+  "files": [
+    {
+      "filename": "lossyear_20S_060W.tif",
+      "bytes": 90841954,
+      "sha256": "77c404ee75d48c59ebf981bdfaca33e56b9b85e63f17f7891a295a8cf72305d2",
+      "source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_20S_060W.tif",
+      "dataset": "Hansen GFC 2025 v1.13",
+      "license": "CC-BY-4.0",
+      "purpose": "prospection_not_training_labels"
+    },
+    {
+      "filename": "lossyear_20S_070W.tif",
+      "bytes": 69976406,
+      "sha256": "230a277cf36de16a211e889c5febcca7c4a51fc0e659841f0ba4a4c2066116d1",
+      "source_url": "https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/Hansen_GFC-2025-v1.13_lossyear_20S_070W.tif",
+      "dataset": "Hansen GFC 2025 v1.13",
+      "license": "CC-BY-4.0",
+      "purpose": "prospection_not_training_labels"
+    }
+  ]
+}
