@@ -4,16 +4,17 @@ Proyecto académico de segmentación bosque/no bosque y detección de pérdida d
 
 ## Estado real
 
-**Fase 2 en curso: dataset.** Acceso a Earth Engine resuelto con un proyecto de Google Cloud compartido. Hay scripts para la baseline NDVI (`docs/fase1-guia.md`) y para exportar Sentinel-2 + MapBiomas y cortar parches con partición espacial (`docs/fase2-dataset.md`); la exportación real y su auditoría están pendientes.
+**Ingesta multiespectral A/B completada; etiquetas pendientes.** A (Boquerón) y B (Alto Paraguay) están aprobadas y C (Presidente Hayes) queda en reserva. Hay ocho recortes para demo/control y cuatro recortes históricos ampliados, pero todavía no hay dataset etiquetado, pesos entrenados, API ni visor implementados.
 
-**Fase 1: base del repositorio y prospección de fuentes.** Hay validaciones de bounding boxes, pruebas unitarias, scripts reproducibles de consulta y revisión de tres candidatas; todavía no hay dataset de entrenamiento, pesos entrenados, API ni visor implementados.
+**Acceso a Earth Engine resuelto** con un proyecto de Google Cloud compartido. `scripts/fase2_export_mapbiomas.py` exporta las etiquetas MapBiomas desde Python con la misma grilla que `export_mapbiomas_pilot.js`, y `scripts/fase2_make_patches.py` corta parches sobre la ingesta histórica (`docs/fase2-dataset.md`). La exportación real y su auditoría están pendientes.
 
 Los recortes de inspección no son el dataset final. Las fechas recientes tienen observaciones utilizables, pero la inspección inicial no confirma un desmonte nuevo inequívoco entre mayo y septiembre de 2026; no se presentará un cambio estacional como deforestación.
 
 ## Objetivo y alcance
 
-- Dos zonas aprobadas, seleccionables en un mapa, con dos fechas recientes preparadas para el modo offline.
-- Experimento histórico separado, compatible temporalmente con las etiquetas.
+- Demo principal con el par histórico 2022/2023, dentro de A/B y con datos locales.
+- Par reciente de mayo/septiembre de 2026 como prueba de estabilidad y falsas alertas.
+- Insumos históricos ampliados a 100 km² por zona para entrenamiento posterior.
 - U-Net compacta con canales B2/B3/B4/B8/NDVI y baseline de umbral NDVI.
 - FastAPI e interfaz local; ejecución en CPU y medición de latencia real.
 - Inferencia en vivo sobre datos preparados, no reproducción de resultados fijos.
@@ -75,8 +76,8 @@ Requieren `requirements-gee.txt`, `earthengine authenticate` y la variable `GEE_
 .\.venv\Scripts\earthengine.exe authenticate
 setx GEE_PROJECT "id-del-proyecto-compartido"   # reabrir la terminal después
 .\.venv\Scripts\python.exe scripts/fase1_ndvi_baseline.py --zone A_boqueron
-.\.venv\Scripts\python.exe scripts/fase2_export_gee.py --zones A_boqueron B_alto_paraguay C_presidente_hayes
-.\.venv\Scripts\python.exe scripts/fase2_make_patches.py --zones A_boqueron B_alto_paraguay C_presidente_hayes
+.\.venv\Scripts\python.exe scripts/fase2_export_mapbiomas.py
+.\.venv\Scripts\python.exe scripts/fase2_make_patches.py
 ```
 
 ## Reproducir la prospección
@@ -89,6 +90,29 @@ La primera ejecución requiere internet y descarga dos tiles comprimidos de Hans
 ```
 
 Consultar `docs/evidence/selected_scenes.csv` para IDs, fechas, nubosidad de escena y calidad local por SCL. Los porcentajes locales son de una grilla reducida de inspección, no la evaluación final a resolución nativa.
+
+## Reproducir o verificar la ingesta
+
+La ingesta interpreta la radiometría según colección, alinea fechas a UTM de 10 m
+y produce B02/B03/B04/B08/NDVI, SCL y máscara de observabilidad. Esa máscara
+**no es bosque/no bosque** y no reemplaza las etiquetas.
+
+```powershell
+.\.venv\Scripts\python.exe scripts/prepare_pilot.py --out data/interim/pilot-v1
+.\.venv\Scripts\python.exe scripts/prepare_pilot.py --zones configs/training_zones.geojson --historical-only --out data/interim/historical-inputs-v1
+```
+
+Los dos paquetes de datos se entregan como adjuntos de la conversación, fuera de Git.
+Después de descomprimirlos dentro de `data/interim/`, estos controles no necesitan internet:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/verify_ingestion.py data/interim/pilot-v1
+.\.venv\Scripts\python.exe scripts/verify_ingestion.py data/interim/historical-inputs-v1
+```
+
+Para MapBiomas, seguir `docs/mapbiomas-export.md`; no se ha ejecutado una exportación
+autenticada. Leer `docs/ingestion-stage-report.md` para resultados, limitaciones y
+qué debe verificarse antes de la siguiente etapa.
 
 ## Datos, licencias y pesos
 
@@ -118,7 +142,7 @@ Las demás fuentes y el acceso pendiente a MapBiomas están documentados en `doc
 git log --oneline
 ```
 
-Las pruebas actuales validan coordenadas y límites de superficie; **no prueban todavía segmentación, inferencia, API ni interfaz**. Docker Compose y los comandos de entrenamiento se documentarán cuando esas fases estén implementadas y verificadas.
+Las pruebas actuales validan coordenadas, límites, radiometría, NDVI, máscaras y grillas; **no prueban todavía segmentación, inferencia, API ni interfaz**. Docker Compose y los comandos de entrenamiento se documentarán cuando esas fases estén implementadas y verificadas.
 
 ## Flujo de trabajo del equipo
 

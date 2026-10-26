@@ -1,0 +1,13 @@
+{
+  "status": "passed",
+  "records": 8,
+  "zones": [
+    "A_boqueron",
+    "B_alto_paraguay"
+  ],
+  "file_checksums_verified": 70,
+  "checks_count": 158,
+  "network_required": false,
+  "labels_present": false,
+  "model_present": false
+}

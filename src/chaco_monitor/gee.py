@@ -55,12 +55,7 @@ def s2_composite(ee, region, start: str, end: str, bands: list[str],
     return col.select(bands).median().divide(10000).clip(region), n
 
 
-def download_geotiff(image, region, path: Path, scale: int, crs: str) -> Path:
-    """Descarga directa (límite de GEE ~48 MB por petición). Maneja ZIP o TIFF."""
-    url = image.getDownloadURL({
-        "region": region, "scale": scale, "crs": crs,
-        "format": "GEO_TIFF", "filePerBand": False,
-    })
+def _save_download(url: str, path: Path) -> Path:
     response = requests.get(url, timeout=(15, 600))
     response.raise_for_status()
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -73,3 +68,16 @@ def download_geotiff(image, region, path: Path, scale: int, crs: str) -> Path:
     temporary.write_bytes(content)
     temporary.replace(path)
     return path
+
+
+def download_geotiff(image, region, path: Path, scale: int, crs: str) -> Path:
+    """Descarga directa (límite de GEE ~48 MB por petición). Maneja ZIP o TIFF."""
+    return _save_download(image.getDownloadURL({
+        "region": region, "scale": scale, "crs": crs,
+        "format": "GEO_TIFF", "filePerBand": False,
+    }), path)
+
+
+def download_geotiff_params(image, path: Path, params: dict) -> Path:
+    """Descarga con parámetros explícitos (p. ej. crs_transform + dimensions)."""
+    return _save_download(image.getDownloadURL(params), path)

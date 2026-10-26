@@ -4,6 +4,8 @@ Reglas (README del repositorio):
 - La partición se decide por BLOQUES espaciales antes de cortar parches, para que
   parches vecinos (casi idénticos) no queden en train y test a la vez.
 - Todas las fechas de un bloque van al mismo conjunto.
+- El split vive sólo en index.csv: los .npz se guardan en una única carpeta, así
+  regenerar con otra semilla no puede dejar copias en carpetas de otro split.
 """
 
 import random
@@ -11,6 +13,7 @@ import random
 import numpy as np
 
 SPLITS = ("train", "val", "test")
+STACK_NODATA = -9999.0  # nodata de stack.tif en la ingesta (prepare_pilot.py)
 
 
 def assign_blocks(n_rows: int, n_cols: int, seed: int = 42,
@@ -49,9 +52,14 @@ def iter_patches(height: int, width: int, block_px: int, patch_px: int):
                     yield br, bc, br * block_px + pr, bc * block_px + pc
 
 
-def normalize_features(stack: np.ndarray, nodata: float = -9999) -> tuple[np.ndarray, np.ndarray]:
-    """Bandas int16 x10000 (B2,B3,B4,B8,NDVI) -> float32 y máscara de validez."""
+def prepare_features(stack: np.ndarray, valid_mask: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """stack.tif (B02, B03, B04, B08, NDVI en float32, nodata -9999) -> x y validez.
+
+    Un píxel es válido sólo si valid.tif == 1 y ningún canal es nodata/NaN.
+    Los inválidos quedan en 0 en x y se ignoran en las etiquetas.
+    """
     stack = stack.astype(np.float32)
-    valid = np.all(stack != nodata, axis=0) & np.all(np.isfinite(stack), axis=0)
-    x = np.where(valid[None], stack / 10000.0, 0.0).astype(np.float32)
+    valid = (np.asarray(valid_mask) == 1)
+    valid &= np.all(np.isfinite(stack) & (stack != STACK_NODATA), axis=0)
+    x = np.where(valid[None], stack, 0.0).astype(np.float32)
     return x, valid

@@ -4,7 +4,7 @@ Este documento fija decisiones de diseño para implementar después de aprobar l
 
 ## Modo offline obligatorio
 
-Se distribuirán dos zonas y dos fechas recientes por zona en un paquete externo a Git; el experimento histórico tendrá datos y manifiestos separados. Cada paquete incluirá bandas alineadas, máscara de calidad, metadatos, miniaturas de fondo, pesos y sus checksums.
+Se distribuirán dos zonas con el par histórico como demo principal y el reciente como control de estabilidad, en paquetes externos a Git. El paquete de demo final incluirá bandas alineadas, máscara de calidad, metadatos, miniaturas de fondo, pesos y sus checksums; los paquetes de ingesta actuales no contienen todavía pesos ni etiquetas.
 
 El usuario seleccionará una zona y dibujará o escogerá un recorte dentro de ella. La API validará cobertura y fechas, ejecutará inferencia en CPU sobre ambas imágenes, calculará cambio únicamente donde ambas son válidas y devolverá máscara/visualización y hectáreas.
 

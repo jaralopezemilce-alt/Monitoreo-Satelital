@@ -5,7 +5,9 @@
       "type": "Feature",
       "properties": {
         "id": "A_boqueron",
-        "status": "candidate_not_approved"
+        "status": "approved",
+        "approved_date": "2026-10-26",
+        "target_crs": "EPSG:32720"
       },
       "geometry": {
         "type": "Polygon",
@@ -39,7 +41,9 @@
       "type": "Feature",
       "properties": {
         "id": "B_alto_paraguay",
-        "status": "candidate_not_approved"
+        "status": "approved",
+        "approved_date": "2026-10-26",
+        "target_crs": "EPSG:32721"
       },
       "geometry": {
         "type": "Polygon",
@@ -73,7 +77,8 @@
       "type": "Feature",
       "properties": {
         "id": "C_presidente_hayes",
-        "status": "candidate_not_approved"
+        "status": "reserve",
+        "decision_date": "2026-10-26"
       },
       "geometry": {
         "type": "Polygon",

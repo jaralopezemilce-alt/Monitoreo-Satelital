@@ -1,0 +1,20 @@
+{
+  "decision_date": "2026-10-26",
+  "active_zones": ["A_boqueron", "B_alto_paraguay"],
+  "reserve_zones": ["C_presidente_hayes"],
+  "primary_experiment": "historical",
+  "secondary_experiment": "recent_stability_false_alerts",
+  "max_request_area_km2": 4,
+  "online_required": false,
+  "professor_approval_pending": true,
+  "pairs": {
+    "A_boqueron": {
+      "historical": ["2022-10-21", "2023-09-21"],
+      "recent_stability": ["2026-05-05", "2026-09-20"]
+    },
+    "B_alto_paraguay": {
+      "historical": ["2022-10-01", "2023-09-16"],
+      "recent_stability": ["2026-05-05", "2026-09-02"]
+    }
+  }
+}
