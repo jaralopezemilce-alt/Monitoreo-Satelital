@@ -9,6 +9,7 @@ Se distribuirán dos zonas y dos fechas recientes por zona en un paquete externo
 El usuario seleccionará una zona y dibujará o escogerá un recorte dentro de ella. La API validará cobertura y fechas, ejecutará inferencia en CPU sobre ambas imágenes, calculará cambio únicamente donde ambas son válidas y devolverá máscara/visualización y hectáreas.
 
 - Límite inicial: 4 km² por solicitud; los polígonos candidatos de prospección son mayores, aproximadamente 15 km², y no equivalen al área máxima de inferencia.
+- Entrenamiento histórico: ventanas propuestas de aproximadamente 10 × 10 km alrededor de las zonas aprobadas, con controles adicionales de calidad; no reducir el dataset al pequeño rectángulo usado en la demo.
 - Tamaños para benchmark: 1, 2 y 4 km², lote 1 y parches de 128 × 128.
 - Arquitectura inicial: U-Net de cinco canales, canales internos [16, 32, 64, 128], con reducción posterior si fuera necesario.
 - Fuera de cobertura o fecha no incluida: error explícito, nunca procesar otra zona/fecha sin avisar.

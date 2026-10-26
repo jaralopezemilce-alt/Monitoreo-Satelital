@@ -41,6 +41,10 @@ La escritura del informe comienza al cerrar cada fase y la semana final se usa p
 
 Propuesta: imágenes 2022/2023, pseudoetiquetas MapBiomas de esos años más revisión manual y referencia de test separada. Las fechas concretas de las tres candidatas ya están en `docs/evidence/selected_scenes.csv`.
 
+No limitar el entrenamiento a los recortes de demo: propondría ampliar dos entornos históricos a aproximadamente 10 × 10 km cada uno, sujetos a revisión de calidad y aprobación. Con dos fechas y parches de 128 × 128 a 10 m, eso da un orden de magnitud de 240 parches no solapados antes de exclusiones, no miles de ejemplos independientes; si faltan clases o bloques de test, ajustar el tamaño antes de congelar el dataset.
+
+Las ventanas mayores requieren comprobar nuevamente cobertura y nubes: las fechas verificadas para el pequeño candidato no garantizan validez en todo su entorno. El entrenamiento sigue en GPU remota y la demo sólo procesa su recorte de hasta 4 km² en CPU.
+
 Un mapa anual no garantiza coincidencia con una adquisición de septiembre/octubre; se revisarán cambios dentro del año y se ignorarán o corregirán píxeles temporalmente incompatibles. Si no se obtiene MapBiomas, se debe aprobar una alternativa antes de avanzar: WorldCover 2021 con imágenes de 2021 o anotación manual acotada; no se sustituirán etiquetas sin documentarlo.
 
 ### Reciente
