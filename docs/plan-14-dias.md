@@ -4,7 +4,7 @@ Este calendario reemplaza al plan ideal de ocho semanas como planificación oper
 
 ## Condiciones de viabilidad
 
-- Dos integrantes con dedicación concentrada: supuesto provisional de 4–6 horas diarias por persona; falta confirmar disponibilidad y experiencia de la compañera.
+- Dos integrantes con dedicación concentrada: disponibilidad de Emilce y Anahi confirmada el 26 de octubre; conviene planificar 5–6 horas efectivas y conservar margen, no ocupar cada hora disponible.
 - Un único modelo compacto y una baseline; sin búsqueda amplia de hiperparámetros.
 - Dos zonas pequeñas offline y un tercer candidato como reserva, no tres pipelines.
 - Separar experimento histórico y demostración reciente, sin exigir que todos los casos recientes tengan cambio positivo.
@@ -13,9 +13,9 @@ Este calendario reemplaza al plan ideal de ocho semanas como planificación oper
 
 ## Calendario y responsabilidades
 
-Los roles no presuponen que una integrante ya domine una tecnología. Propongo Emilce como responsable de integración/datos y la segunda integrante como responsable de etiquetas/evaluación; se pueden intercambiar después de conocer sus fortalezas.
+Los roles no presuponen que una integrante ya domine una tecnología. Propongo Emilce como responsable de integración/datos y Anahi como responsable de etiquetas/evaluación; se pueden intercambiar después de conocer sus fortalezas.
 
-| Fecha | Hito y fase | Emilce | Segunda integrante | Verificación / puerta de salida |
+| Fecha | Hito y fase | Emilce | Anahi | Verificación / puerta de salida |
 |---|---|---|---|---|
 | 26 oct | Investigación y base Git | Revisar repositorio y restricciones offline | Revisar candidatas y condiciones académicas | Tres candidatas documentadas, pruebas de base y decisiones pendientes explícitas |
 | 27 oct | Cierre de selección; ingesta piloto | Instalar entorno, elegir 2 zonas y resolver acceso a etiquetas | Revisar muestras/fechas y acordar definición de bosque | Zonas aprobadas; una descarga multiespectral y una máscara verificadas |
@@ -36,6 +36,8 @@ Los roles no presuponen que una integrante ya domine una tecnología. Propongo E
 La escritura del informe comienza al cerrar cada fase y la semana final se usa para compactarlo y revisarlo, no para inventar metodología retrospectivamente. El alcance mínimo incluye todos los entregables obligatorios, con el modo online como única extensión prescindible.
 
 ## Dos experimentos separados
+
+Actualización aprobada el 26 de octubre: A y B son las zonas activas, C queda de reserva. El experimento histórico será la demo principal y el reciente un control de estabilidad/falsas alertas, sin prometer hectáreas positivas; sigue pendiente que la cátedra acepte ese encuadre.
 
 ### Histórico
 
@@ -64,3 +66,18 @@ Si la cátedra exige un caso reciente positivo, la siguiente fase debe dedicar u
 ## Estado del cierre de fase 1
 
 Quedan preparados el repositorio, tres candidatas con coordenadas, escenas históricas/recientes, evidencia visual, un piloto de revisión de Hansen y pruebas de límites geométricos. Faltan aprobación de zonas, disponibilidad de la segunda integrante y acceso/exportación de MapBiomas; no se inició entrenamiento ni implementación de la API/visor.
+
+Ese párrafo describe el cierre original de la fase 1. Desde entonces se aprobaron A/B y la disponibilidad de ambas integrantes; la ingesta multiespectral ya está preparada y documentada en `ingestion-stage-report.md`, mientras la exportación de etiquetas sigue pendiente.
+
+## Disponibilidad confirmada y coordinación
+
+Interpreto “10 a 12 de la noche” como 22:00–00:00 y “6 a 8 de la tarde” como 18:00–20:00, horario de Paraguay. Es disponibilidad declarada, no una promesa de productividad continua ni una agenda automática.
+
+| Integrante | Mañana | Tarde | Noche | Máximo disponible |
+|---|---|---|---|---|
+| Emilce | 08:00–12:00 | 18:00–20:00, excepto martes | 22:00–00:00 | 8 h; martes 6 h |
+| Anahi | 07:00–11:00 | 15:00–16:00 y 18:00–20:00, excepto este último bloque los martes | 22:00–00:00 | 9 h; martes 7 h |
+
+Propongo sincronización breve 08:00–08:15 y revisión cruzada 22:00–22:20. El resto se divide entre trabajo individual, pausas y reserva para fallos; los martes no se planifica reunión 18:00–20:00.
+
+MapBiomas tiene un límite de decisión del 28 de octubre de 2026. Si no se logra exportar, se aplicará la alternativa Hansen autorizada, con documentación y revisión contemporánea; no se sustituirá “sin pérdida” por “bosque” ni se inventará un porcentaje de ruido.
