@@ -4,6 +4,8 @@ Proyecto académico de segmentación bosque/no bosque y detección de pérdida d
 
 ## Estado real
 
+**Fase 2 en curso: dataset.** Acceso a Earth Engine resuelto con un proyecto de Google Cloud compartido. Hay scripts para la baseline NDVI (`docs/fase1-guia.md`) y para exportar Sentinel-2 + MapBiomas y cortar parches con partición espacial (`docs/fase2-dataset.md`); la exportación real y su auditoría están pendientes.
+
 **Fase 1: base del repositorio y prospección de fuentes.** Hay validaciones de bounding boxes, pruebas unitarias, scripts reproducibles de consulta y revisión de tres candidatas; todavía no hay dataset de entrenamiento, pesos entrenados, API ni visor implementados.
 
 Los recortes de inspección no son el dataset final. Las fechas recientes tienen observaciones utilizables, pero la inspección inicial no confirma un desmonte nuevo inequívoco entre mayo y septiembre de 2026; no se presentará un cambio estacional como deforestación.
@@ -62,6 +64,19 @@ En Linux/macOS:
 python3.12 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python -m pytest -q
+```
+
+## Scripts de Earth Engine (fases 1 y 2)
+
+Requieren `requirements-gee.txt`, `earthengine authenticate` y la variable `GEE_PROJECT` con el ID del proyecto compartido:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-gee.txt
+.\.venv\Scripts\earthengine.exe authenticate
+setx GEE_PROJECT "id-del-proyecto-compartido"   # reabrir la terminal después
+.\.venv\Scripts\python.exe scripts/fase1_ndvi_baseline.py --zone A_boqueron
+.\.venv\Scripts\python.exe scripts/fase2_export_gee.py --zones A_boqueron B_alto_paraguay C_presidente_hayes
+.\.venv\Scripts\python.exe scripts/fase2_make_patches.py --zones A_boqueron B_alto_paraguay C_presidente_hayes
 ```
 
 ## Reproducir la prospección

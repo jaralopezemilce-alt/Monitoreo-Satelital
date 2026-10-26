@@ -35,9 +35,9 @@ projects/mapbiomas-public/assets/chaco/lulc/collection5/mapbiomas_chaco_collecti
 
 El portal declara CC BY 4.0 y exige reconocer la fuente ([MapBiomas Chaco](https://chaco.mapbiomas.org/)); la leyenda distingue vegetación leñosa cerrada, abierta, dispersa e inundable e incluye árboles y arbustos ([leyenda](https://chaco.mapbiomas.org/wp-content/uploads/sites/2/2024/08/MB-Chaco-Col-5-pdf-Legend-Descript-ES.pdf)). Por ello no se asignarán automáticamente todas las clases leñosas a bosque.
 
-**Estado: fuente identificada, raster todavía no exportado ni auditado.** El portal interactivo no permitió completar la revisión en esta sesión y el toolkit proporciona assets de Earth Engine, no enlaces públicos directos a GeoTIFF. No hay autorización de Earth Engine en este entorno; no se fabricaron URLs ni una estimación de ruido de MapBiomas.
+**Estado (26 oct, tarde): acceso a Earth Engine resuelto; exportación pendiente de ejecutar.** El equipo comparte un proyecto de Google Cloud con Earth Engine habilitado (variable `GEE_PROJECT`). `scripts/fase2_export_gee.py` exporta por zona y año el código MapBiomas original junto a Sentinel-2 en la misma grilla UTM de 10 m. Hasta que se ejecute y se revise `manifests/gee_exports.json`, MapBiomas sigue sin auditar.
 
-Siguiente paso propuesto: exportar recortes 2022/2023 desde una cuenta de Earth Engine habilitada y revisar la correspondencia temporal con Sentinel. Si el acceso no se resuelve en el primer día de ingesta, no bloquear todo el proyecto: pasar a una alternativa histórica documentada y a anotación manual acotada, previa aprobación.
+Códigos de clase de la leyenda `mapbiomas-chaco` del toolkit oficial ([legends.js](https://github.com/mapbiomas/user-toolkit/blob/master/data/legends.js)): 3 leñosas cerradas, 4 leñosas abiertas, 6 leñosas inundables, 45 leñosas dispersas, 12 pastizal, 15 pastura, 18/19 agricultura, 26/33 agua, 0/27 no observado. La asignación propuesta a bosque/no bosque está en `src/chaco_monitor/labels.py` y `docs/fase2-dataset.md`, pendiente de aprobación del equipo.
 
 ## Fuentes de contraste
 
