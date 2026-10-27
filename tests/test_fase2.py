@@ -2,6 +2,7 @@
 
 import csv
 import json
+import runpy
 import subprocess
 import sys
 from pathlib import Path
@@ -144,3 +145,139 @@ def test_regenerating_with_other_seed_leaves_no_duplicates(tmp_path):
     files = sorted(p.name for p in (out / "patches").glob("*.npz"))
     assert len(files) == len(rows) == len({r["patch_id"] for r in rows})
     assert files == sorted(Path(r["path"]).name for r in rows)
+
+
+def _snapshot(folder):
+    """Captura bytes para demostrar que un fallo no modifica el dataset previo."""
+    return {str(p.relative_to(folder)): p.read_bytes() for p in folder.rglob("*") if p.is_file()}
+
+
+@pytest.mark.parametrize("failure", ["missing_label", "incomplete_manifest", "write_failure"])
+def test_failed_overwrite_preserves_previous_dataset(tmp_path, monkeypatch, failure):
+    """Errores de lectura, manifest y escritura conservan exactamente la salida anterior."""
+    inputs, labels = _package(tmp_path)
+    out = tmp_path / "dataset"
+    _run(inputs, labels, out)
+    previous = _snapshot(out)
+    if failure == "missing_label":
+        (labels / "Z_mapbiomas_c5_v2_2023.tif").unlink()
+    elif failure == "incomplete_manifest":
+        manifest = json.loads((inputs / "manifest.json").read_text())
+        manifest["records"].pop()
+        (inputs / "manifest.json").write_text(json.dumps(manifest))
+    else:
+        # Fallar durante el segundo parche comprueba limpieza de una salida parcial.
+        module = runpy.run_path(str(SCRIPT))
+        original_save = np.savez_compressed
+        calls = 0
+
+        def fail_second_write(*args, **kwargs):
+            nonlocal calls
+            calls += 1
+            if calls == 2:
+                raise OSError("fallo de escritura simulado")
+            return original_save(*args, **kwargs)
+
+        monkeypatch.setattr(np, "savez_compressed", fail_second_write)
+        monkeypatch.setattr(sys, "argv", [str(SCRIPT), "--inputs", str(inputs),
+                                        "--labels", str(labels), "--out", str(out), "--overwrite"])
+        with pytest.raises(OSError, match="simulado"):
+            module["main"]()
+    if failure != "write_failure":
+        assert _run(inputs, labels, out, "--overwrite", check=False).returncode != 0
+    assert _snapshot(out) == previous
+    assert not list(tmp_path.glob(".dataset.*"))
+
+
+@pytest.mark.parametrize("destination", ["inputs", "labels", "parent", "nested", "repo", "foreign"])
+def test_unsafe_output_is_rejected_without_deleting(tmp_path, destination):
+    """Nunca reemplazar las entradas, el repositorio ni una carpeta no reconocida."""
+    inputs, labels = _package(tmp_path)
+    foreign = tmp_path / "foreign"
+    foreign.mkdir()
+    (foreign / "keep.txt").write_text("archivo ajeno")
+    choices = {"inputs": inputs, "labels": labels, "parent": tmp_path,
+               "nested": inputs / "nested", "repo": ROOT, "foreign": foreign}
+    before = _snapshot(tmp_path)
+    failed = _run(inputs, labels, choices[destination], "--overwrite", check=False)
+    assert failed.returncode != 0
+    assert _snapshot(tmp_path) == before
+
+
+def test_existing_empty_output_is_supported(tmp_path):
+    """Una carpeta vacía existente es válida y no requiere --overwrite."""
+    inputs, labels = _package(tmp_path)
+    out = tmp_path / "dataset"
+    out.mkdir()
+    _run(inputs, labels, out)
+    assert (out / "index.csv").is_file()
+
+
+def test_failed_publish_restores_previous_output(tmp_path, monkeypatch):
+    """Un fallo del renombrado final restaura el directorio previo."""
+    module = runpy.run_path(str(SCRIPT))
+    out, staged = tmp_path / "dataset", tmp_path / "staged"
+    out.mkdir()
+    staged.mkdir()
+    (out / "keep.txt").write_text("resultado previo")
+    original_rename = Path.rename
+
+    def fail_publish(path, target):
+        if path == staged:
+            raise OSError("fallo de publicación simulado")
+        return original_rename(path, target)
+
+    monkeypatch.setattr(Path, "rename", fail_publish)
+    with pytest.raises(OSError, match="simulado"):
+        module["publish_dataset"](staged, out)
+    assert (out / "keep.txt").read_text() == "resultado previo"
+    assert not list(tmp_path.glob(".dataset.backup-*"))
+
+
+def test_locked_output_is_not_changed(tmp_path):
+    """Otra corrida no debe competir por el mismo destino."""
+    inputs, labels = _package(tmp_path)
+    lock = tmp_path / ".dataset.lock"
+    lock.write_text("otra corrida")
+    failed = _run(inputs, labels, tmp_path / "dataset", check=False)
+    assert failed.returncode != 0 and "bloqueada" in failed.stderr
+    assert lock.read_text() == "otra corrida"
+    assert not (tmp_path / "dataset").exists()
+
+
+def test_symlink_output_is_rejected(tmp_path):
+    """No seguir un enlace a una carpeta ajena; Windows puede requerir permisos."""
+    inputs, labels = _package(tmp_path)
+    target = tmp_path / "target"
+    target.mkdir()
+    (target / "keep.txt").write_text("conservar")
+    alias = tmp_path / "alias"
+    try:
+        alias.symlink_to(target, target_is_directory=True)
+    except OSError:
+        pytest.skip("Este sistema no permite crear enlaces simbólicos.")
+    failed = _run(inputs, labels, alias, "--overwrite", check=False)
+    assert failed.returncode != 0 and "simbólicos" in failed.stderr
+    assert (target / "keep.txt").read_text() == "conservar"
+
+
+def test_failed_restore_keeps_recoverable_backup(tmp_path, monkeypatch):
+    """Si falla también la restauración, no eliminar el único respaldo."""
+    module = runpy.run_path(str(SCRIPT))
+    out, staged = tmp_path / "dataset", tmp_path / "staged"
+    out.mkdir()
+    staged.mkdir()
+    (out / "keep.txt").write_text("recuperable")
+    original_rename = Path.rename
+
+    def fail_publish_and_restore(path, target):
+        if target == out:
+            raise OSError("destino temporalmente inaccesible")
+        return original_rename(path, target)
+
+    monkeypatch.setattr(Path, "rename", fail_publish_and_restore)
+    with pytest.raises(RuntimeError, match="respaldo conservado"):
+        module["publish_dataset"](staged, out)
+    backups = list(tmp_path.glob(".dataset.backup-*"))
+    assert len(backups) == 1
+    assert (backups[0] / "keep.txt").read_text() == "recuperable"

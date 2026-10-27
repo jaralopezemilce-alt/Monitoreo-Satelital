@@ -24,7 +24,11 @@ import csv
 import json
 import shutil
 import sys
+import tempfile
+import uuid
+import warnings
 from collections import Counter
+from contextlib import contextmanager
 from pathlib import Path
 
 import numpy as np
@@ -50,19 +54,93 @@ def parse_args():
                    help="fracción mínima de píxeles con etiqueta de cambio no ignorada")
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--overwrite", action="store_true",
-                   help="borra <out> antes de escribir (necesario para regenerar)")
+                   help="reemplaza un dataset anterior solo después de generar la nueva salida")
     return p.parse_args()
 
 
-def prepare_output(out: Path, overwrite: bool) -> Path:
-    """Evita mezclar corridas: <out> debe estar vacío o se borra con --overwrite."""
-    if out.exists() and any(out.iterdir()):
-        if not overwrite:
-            raise SystemExit(f"{out} ya contiene un dataset. Usá --overwrite para regenerarlo "
-                             "(se borra entero) u otra carpeta con --out.")
-        shutil.rmtree(out)
-    (out / "patches").mkdir(parents=True)
-    return out / "patches"
+def validate_output(out: Path, inputs: Path, labels: Path, overwrite: bool) -> Path:
+    """Rechaza rutas sensibles, solapadas, enlazadas o con archivos ajenos.
+
+    Resolver rutas evita que variantes como '../inputs' eludan la comparación.
+    No se siguen enlaces simbólicos de salida, ni siquiera con --overwrite.
+    """
+    absolute = out.absolute()
+    if any(p.is_symlink() for p in (absolute, *absolute.parents)):
+        raise SystemExit("Salida insegura: no se admiten enlaces simbólicos.")
+    out = out.resolve()
+    protected = (inputs.resolve(), labels.resolve())
+    for source in protected:
+        if out == source or out in source.parents or source in out.parents:
+            raise SystemExit("Salida insegura: se solapa con las imágenes o las etiquetas.")
+    # Se permiten subcarpetas del repositorio, nunca reemplazar su raíz o ancestros.
+    for root in (Path(__file__).resolve().parents[1], Path.cwd().resolve(), Path.home().resolve()):
+        if out == root or out in root.parents:
+            raise SystemExit("Salida insegura: raíz del repositorio, trabajo, hogar o ancestro.")
+    if out.exists():
+        if not out.is_dir():
+            raise SystemExit("La salida debe ser una carpeta, no un archivo.")
+        entries = {p.name for p in out.iterdir()}
+        if entries and not overwrite:
+            raise SystemExit(f"{out} ya contiene datos. Usá --overwrite para regenerar "
+                             "un dataset reconocido u otra carpeta con --out.")
+        if entries:
+            if entries != {"index.csv", "config.json", "patches"}:
+                raise SystemExit("Salida no reconocida como dataset: no se borrarán archivos ajenos.")
+            if (not (out / "index.csv").is_file() or not (out / "config.json").is_file()
+                    or not (out / "patches").is_dir()
+                    or any(p.is_symlink() for p in out.rglob("*"))):
+                raise SystemExit("Salida no reconocida o con enlaces simbólicos.")
+    return out
+
+
+def publish_dataset(staged: Path, out: Path) -> None:
+    """Publica por renombrado en el mismo disco; restaura ante errores ordinarios.
+
+    El respaldo queda fuera del temporal para no borrarlo si falla la restauración.
+    No promete atomicidad ante un corte de energía entre los dos renombrados.
+    """
+    backup = out.parent / f".{out.name}.backup-{uuid.uuid4().hex}"
+    had_previous = out.exists()
+    if had_previous:
+        out.rename(backup)
+    try:
+        staged.rename(out)
+    except BaseException:
+        if had_previous:
+            try:
+                backup.rename(out)
+            except OSError as exc:
+                raise RuntimeError(f"No se pudo restaurar: respaldo conservado en {backup}") from exc
+        raise
+    if had_previous:
+        try:
+            shutil.rmtree(backup)
+        except OSError:
+            warnings.warn(f"Dataset publicado; quedó un respaldo para revisar en {backup}")
+
+
+@contextmanager
+def output_transaction(args):
+    """Aísla generación y errores; un bloqueo evita dos escritores simultáneos."""
+    out = validate_output(args.out, args.inputs, args.labels, args.overwrite)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    lock = out.parent / f".{out.name}.lock"
+    try:
+        handle = lock.open("x", encoding="utf-8")
+    except FileExistsError:
+        raise SystemExit(f"Salida bloqueada por otra corrida: {lock}. No borrar si sigue activa.")
+    try:
+        with handle:
+            handle.write("Generación en curso; quitar solo tras verificar que terminó el proceso.\n")
+        # Validar de nuevo después del bloqueo cierra la carrera entre dos invocaciones.
+        validate_output(out, args.inputs, args.labels, args.overwrite)
+        with tempfile.TemporaryDirectory(prefix=f".{out.name}.staging-", dir=out.parent) as temp:
+            staged = Path(temp) / "dataset"
+            staged.mkdir()
+            yield staged
+            publish_dataset(staged, out)
+    finally:
+        lock.unlink()
 
 
 def read_labels(path: Path, crs, transform, shape) -> np.ndarray:
@@ -88,15 +166,16 @@ def load_date(inputs: Path, labels: Path, record: dict):
     return x, remap_mapbiomas(codes, valid), codes, (str(crs), tuple(transform)[:6], shape), year
 
 
-def main():
-    args = parse_args()
+def build_dataset(args, work_dir: Path):
+    """Genera archivos solamente en el temporal; el llamador controla la publicación."""
     manifest = json.loads((args.inputs / "manifest.json").read_text(encoding="utf-8"))
     by_zone = {}
     for record in manifest["records"]:
         if record["role"] in ROLES:
             by_zone.setdefault(record["zone"], {})[record["role"]] = record
     zones = args.zones or sorted(by_zone)
-    patch_dir = prepare_output(args.out, args.overwrite)
+    patch_dir = work_dir / "patches"
+    patch_dir.mkdir()
 
     rows, summary, audit = [], Counter(), {}
     for zone in zones:
@@ -137,13 +216,21 @@ def main():
             summary[f"{split}_parches"] += 1
             summary[f"{split}_px_perdida"] += int(np.sum(p_ch == 1))
 
-    with (args.out / "index.csv").open("w", newline="", encoding="utf-8") as f:
+    with (work_dir / "index.csv").open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0]) if rows else ["patch_id"])
         writer.writeheader()
         writer.writerows(rows)
     config = {k: (str(v) if isinstance(v, Path) else v) for k, v in vars(args).items()}
     config.update({"zones": zones, "summary": dict(summary), "audit": audit})
-    (args.out / "config.json").write_text(json.dumps(config, indent=2, ensure_ascii=False), encoding="utf-8")
+    (work_dir / "config.json").write_text(json.dumps(config, indent=2, ensure_ascii=False), encoding="utf-8")
+    return summary, audit
+
+
+def main():
+    """No publica resultados parciales si falla una lectura, cálculo o escritura."""
+    args = parse_args()
+    with output_transaction(args) as work_dir:
+        summary, audit = build_dataset(args, work_dir)
 
     print("Auditoría por zona:")
     for zone, info in audit.items():
