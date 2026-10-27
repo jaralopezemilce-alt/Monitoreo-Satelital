@@ -166,8 +166,30 @@ def load_date(inputs: Path, labels: Path, record: dict):
     return x, remap_mapbiomas(codes, valid), codes, (str(crs), tuple(transform)[:6], shape), year
 
 
+def validate_dataset(rows: list[dict], patch_dir: Path) -> None:
+    """Exige muestras y los tres splits después de los descartes, no solo bloques."""
+    if not rows:
+        raise SystemExit("Dataset vacío: no quedó ningún parche útil. Revisar cobertura, "
+                         "nodata, etiquetas, tamaño de bloques y --min-useful.")
+    counts = Counter(row["split"] for row in rows)
+    missing = [split for split in ("train", "val", "test") if not counts[split]]
+    if missing:
+        raise SystemExit(f"Dataset incompleto: splits sin muestras: {', '.join(missing)}. "
+                         "Revisar cobertura y protocolo espacial antes de congelar la partición.")
+    ids = [row["patch_id"] for row in rows]
+    expected = {f"{patch_id}.npz" for patch_id in ids}
+    actual = {path.name for path in patch_dir.glob("*.npz")}
+    if len(ids) != len(set(ids)) or expected != actual:
+        raise SystemExit("Dataset inconsistente: índices duplicados o archivos sin correspondencia.")
+
+
 def build_dataset(args, work_dir: Path):
     """Genera archivos solamente en el temporal; el llamador controla la publicación."""
+    if args.patch_px <= 0 or args.block_px <= 0 or args.block_px % args.patch_px:
+        raise SystemExit("Tamaños inválidos: block-px y patch-px deben ser positivos "
+                         "y block-px múltiplo de patch-px.")
+    if not 0 < args.min_useful <= 1:
+        raise SystemExit("--min-useful debe ser mayor que 0 y menor o igual que 1.")
     manifest = json.loads((args.inputs / "manifest.json").read_text(encoding="utf-8"))
     by_zone = {}
     for record in manifest["records"]:
@@ -216,8 +238,10 @@ def build_dataset(args, work_dir: Path):
             summary[f"{split}_parches"] += 1
             summary[f"{split}_px_perdida"] += int(np.sum(p_ch == 1))
 
+    # No se publica el índice ni reemplaza una corrida previa si falla la validación.
+    validate_dataset(rows, patch_dir)
     with (work_dir / "index.csv").open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=list(rows[0]) if rows else ["patch_id"])
+        writer = csv.DictWriter(f, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
     config = {k: (str(v) if isinstance(v, Path) else v) for k, v in vars(args).items()}
@@ -239,7 +263,8 @@ def main():
     for key in sorted(summary):
         print(f"  {key:36s} {summary[key]:>8,}")
     if summary["test_px_perdida"] == 0:
-        print("  ATENCIÓN: test no tiene píxeles de pérdida; probar otra --seed o revisar zonas.")
+        print("  ATENCIÓN: test no tiene píxeles de pérdida; documentar esta limitación "
+              "y revisar el protocolo antes de entrenar, sin seleccionar semillas por rendimiento.")
     print(f"Índice: {args.out / 'index.csv'}")
 
 

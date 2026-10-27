@@ -281,3 +281,55 @@ def test_failed_restore_keeps_recoverable_backup(tmp_path, monkeypatch):
     backups = list(tmp_path.glob(".dataset.backup-*"))
     assert len(backups) == 1
     assert (backups[0] / "keep.txt").read_text() == "recuperable"
+
+
+@pytest.mark.parametrize("previous", [False, True])
+@pytest.mark.parametrize("failure", ["empty", "test_missing"])
+def test_invalid_dataset_is_not_published(tmp_path, previous, failure):
+    """Descartar todo o un split debe fallar sin publicar ni reemplazar un dataset."""
+    inputs, labels = _package(tmp_path)
+    out = tmp_path / "dataset"
+    if previous:
+        _run(inputs, labels, out)
+    before = _snapshot(out) if previous else {}
+    # Enmascarar todos los píxeles o solamente los bloques de test, en ambas fechas.
+    assignments = assign_blocks(3, 3, seed=42)
+    for path in inputs.glob("*/*/valid.tif"):
+        with rasterio.open(path, "r+") as dst:
+            mask = dst.read(1)
+            if failure == "empty":
+                mask[:] = 0
+            else:
+                for (br, bc), split in assignments.items():
+                    if split == "test":
+                        mask[br * 256:(br + 1) * 256, bc * 256:(bc + 1) * 256] = 0
+            dst.write(mask, 1)
+    failed = _run(inputs, labels, out, "--overwrite", check=False)
+    expected = "Dataset vacío" if failure == "empty" else "splits sin muestras: test"
+    assert failed.returncode != 0 and expected in failed.stderr
+    assert _snapshot(out) == before
+    assert out.exists() == previous
+    assert not list(tmp_path.glob(".dataset.*"))
+
+
+@pytest.mark.parametrize("option,value", [
+    ("--patch-px", "0"), ("--block-px", "-1"), ("--block-px", "250"),
+    ("--min-useful", "0"), ("--min-useful", "1.1"),
+])
+def test_invalid_parameters_do_not_create_dataset(tmp_path, option, value):
+    """Evita división por cero y aceptar parches enteramente ignorados."""
+    inputs, labels = _package(tmp_path)
+    out = tmp_path / "dataset"
+    failed = _run(inputs, labels, out, option, value, check=False)
+    assert failed.returncode != 0
+    assert not out.exists()
+    assert not list(tmp_path.glob(".dataset.*"))
+
+
+def test_duplicate_zone_does_not_publish_duplicate_index(tmp_path):
+    """Una zona repetida no debe producir dos filas por archivo físico."""
+    inputs, labels = _package(tmp_path)
+    out = tmp_path / "dataset"
+    failed = _run(inputs, labels, out, "--zones", "Z", "Z", check=False)
+    assert failed.returncode != 0 and "índices duplicados" in failed.stderr
+    assert not out.exists()
