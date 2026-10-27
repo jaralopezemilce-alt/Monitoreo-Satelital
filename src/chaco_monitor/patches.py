@@ -1,8 +1,9 @@
 """Partición espacial por bloques y extracción de parches (fase 2).
 
 Reglas (README del repositorio):
-- La partición se decide por BLOQUES espaciales antes de cortar parches, para que
-  parches vecinos (casi idénticos) no queden en train y test a la vez.
+- La partición se decide por BLOQUES espaciales antes de cortar parches.
+  Bloques contiguos pueden caer en splits distintos: este método no garantiza
+  independencia espacial sin una separación adicional, todavía pendiente.
 - Todas las fechas de un bloque van al mismo conjunto.
 - El split vive sólo en index.csv: los .npz se guardan en una única carpeta, así
   regenerar con otra semilla no puede dejar copias en carpetas de otro split.

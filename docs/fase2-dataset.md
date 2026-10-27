@@ -1,6 +1,6 @@
 # Guía de la fase 2: dataset de entrenamiento
 
-Objetivo: unir las imágenes ya preparadas en la ingesta con las etiquetas de MapBiomas y obtener parches para entrenar y evaluar la U-Net sin fuga de datos.
+Objetivo: unir las imágenes ya preparadas en la ingesta con las etiquetas de MapBiomas y obtener parches para entrenar y evaluar la U-Net con una partición reproducible. La independencia espacial entre splits todavía requiere definir y verificar una separación adicional.
 
 ## Idea general
 
@@ -51,7 +51,9 @@ En `src/chaco_monitor/labels.py`:
 - Cada zona se divide en **bloques de 256 × 256 px** (2,56 km). Cada bloque va entero a train, val o test (≈ 70/15/15, semilla 42), con al menos un bloque de val y uno de test por zona.
 - Dentro de cada bloque se cortan 4 parches de **128 × 128 px** que nunca cruzan el borde del bloque.
 - Se descartan parches con menos del 80 % de píxeles útiles.
-- **Cada parche se guarda una sola vez** en `patches/`; el split vive sólo en `index.csv`. Si la carpeta ya tiene un dataset, el script se detiene: para regenerar (por ejemplo con otra semilla) hay que usar `--overwrite`, que borra la carpeta entera. Así no quedan copias viejas en otro split.
+- Cada parche se guarda una sola vez en `patches/`; el split vive sólo en `index.csv`. Si la carpeta ya tiene un dataset, el script se detiene sin `--overwrite`. Con esa opción genera y valida la nueva corrida en un temporal del mismo disco y recién entonces reemplaza la anterior; no borra primero.
+- Se rechazan salidas solapadas con imágenes o etiquetas, raíces sensibles, enlaces simbólicos y carpetas con archivos ajenos al formato `index.csv`, `config.json`, `patches/`. No agregar archivos personales dentro de la carpeta del dataset.
+- La salida se publica solo si tiene muestras en train, val y test después de los descartes, sin IDs duplicados y con correspondencia entre índice y archivos. Si no hay parches o falta un split, el proceso termina con error y conserva la salida anterior.
 - `config.json` guarda los parámetros, el resumen por split y una auditoría por zona: % de bosque por año, % ignorado, hectáreas de pérdida según MapBiomas y códigos desconocidos.
 
 Orden de magnitud: 1000 px → 3 × 3 bloques → 36 parches por zona, unos 72 pares para A y B antes de descartes. Es poco: el entrenamiento usará aumentación (rotaciones y espejados).
@@ -59,7 +61,7 @@ Orden de magnitud: 1000 px → 3 × 3 bloques → 36 parches por zona, unos 72 p
 ## Qué revisar antes de congelar el dataset v1
 
 1. `unknown_codes` vacío en el manifiesto y en `config.json`; si no, decidir esos códigos y actualizar `labels.py`.
-2. Que test tenga píxeles de pérdida (el script avisa si no). Si no los tiene, probar otra `--seed --overwrite` y registrar la elegida.
+2. Revisar cantidades y clases de cada split. Si test no tiene pérdida, documentar la limitación y definir un criterio de partición o estratificación antes de entrenar; no elegir semillas según el rendimiento del modelo ni prometer pérdida positiva.
 3. Superponer `mb_code` sobre el RGB en QGIS para 5–10 parches: ¿MapBiomas coincide con lo que se ve en esa fecha?
 4. Referencia manual de test, separada de las pseudoetiquetas, según el plan.
 
@@ -68,3 +70,20 @@ Orden de magnitud: 1000 px → 3 × 3 bloques → 36 parches por zona, unos 72 p
 - MapBiomas es un mapa anual de 30 m (Random Forest sobre Landsat): son **pseudoetiquetas**, no verdad de terreno.
 - Desfase temporal: la etiqueta anual puede no coincidir con la fecha exacta de la escena Sentinel.
 - El remuestreo de 30 m a 10 m produce bordes escalonados; no agrega detalle real.
+- Los bloques contiguos pueden pertenecer a splits distintos. No se ha implementado una franja de separación ni demostrado independencia espacial.
+- La fase 1 permanece exploratoria: su tratamiento de observaciones inválidas sigue pendiente y no debe usarse aún como estimación validada.
+
+## Regeneración segura y recuperación
+
+```powershell
+.\.venv\Scripts\python.exe scripts/fase2_make_patches.py --overwrite
+.\.venv\Scripts\python.exe -m pytest -q
+```
+
+La semilla predeterminada sigue siendo 42 y se conserva en `config.json`. La validación de salida no demuestra que las etiquetas sean correctas: sigue siendo necesaria la auditoría visual y metodológica.
+
+Se necesita espacio libre para conservar el dataset anterior y construir el nuevo. Un archivo hermano `.dataset-v1.lock` bloquea escritores simultáneos; no eliminarlo mientras exista una ejecución activa.
+
+Ante un cierre forzado o un corte de energía, pueden quedar temporales `.dataset-v1.staging-*`, un respaldo `.dataset-v1.backup-*` o el bloqueo. Los dos renombrados no son una transacción atómica ante un corte de energía: detener procesos, comprobar qué salida es completa y recuperar el respaldo si corresponde antes de limpiar. No borrar automáticamente un respaldo ni una carpeta ajena.
+
+Consultar `docs/fase2-correcciones.md` para los casos de prueba y el alcance de esta etapa.
