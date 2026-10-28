@@ -2,6 +2,7 @@
 
 import importlib
 import json
+import re
 
 import numpy as np
 import pytest
@@ -48,6 +49,13 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setenv("CHACO_INPUTS", str(inputs))
     monkeypatch.setenv("CHACO_LABELS", str(tmp_path / "no-hay"))
     monkeypatch.setenv("CHACO_MODEL", str(model_path))
+    dataset = tmp_path / "dataset"
+    dataset.mkdir()
+    (dataset / "config.json").write_text(json.dumps({"block_px": 200}))
+    (dataset / "index.csv").write_text(
+        "patch_id,zone,split,block\r\n"
+        "p1,A_boqueron,train,0_0\r\np2,A_boqueron,test,1_1\r\np3,B_alto_paraguay,val,0_0\r\n")
+    monkeypatch.setenv("CHACO_DATASET", str(dataset))
     import api.main as main
     main = importlib.reload(main)
     return TestClient(main.app)
@@ -100,3 +108,20 @@ def test_rgb_background(client):
     r = client.get("/zones/A_boqueron/rgb/historical_2023_1.png")
     assert r.status_code == 200 and r.content[:4] == b"\x89PNG"
     assert len(r.headers["x-bounds"].split(",")) == 4
+
+
+def test_splits_blocks(client):
+    fc = client.get("/zones/A_boqueron/splits").json()
+    splits = {f["properties"]["block"]: f["properties"]["split"] for f in fc["features"]}
+    assert splits == {"0_0": "train", "1_1": "test"}      # solo bloques de la zona pedida
+    ring = fc["features"][1]["geometry"]["coordinates"][0]
+    assert len(ring) == 5 and ring[0] == ring[-1]
+    assert client.get("/zones/Z/splits").status_code == 404
+
+
+def test_visor_is_served_locally(client):
+    assert client.get("/", follow_redirects=False).headers["location"] == "/visor/"
+    html = client.get("/visor/").text
+    assert "vendor/leaflet/leaflet.js" in html
+    assert not re.search(r'(src|href)="https?://', html)     # sin CDN: funciona offline
+    assert client.get("/visor/vendor/leaflet/leaflet.js").status_code == 200

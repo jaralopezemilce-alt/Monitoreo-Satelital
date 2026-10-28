@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Monitor de deforestación · Chaco paraguayo</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%232f5d3a'/%3E%3Crect x='8' y='3' width='5' height='5' fill='%23d7301f'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <aside class="panel" aria-label="Controles">
+    <header class="brand">
+      <h1>Monitor de deforestación</h1>
+      <p>Chaco paraguayo · Sentinel-2 · U-Net</p>
+    </header>
+
+    <section class="block">
+      <label class="label" for="zone">Zona</label>
+      <select id="zone"></select>
+      <p class="meta" id="zone-dates">Cargando zonas…</p>
+    </section>
+
+    <section class="block">
+      <span class="label">Imagen de fondo</span>
+      <div class="segmented" role="group" aria-label="Fecha de la imagen de fondo">
+        <button type="button" data-role="historical_2022_0" class="active">Antes</button>
+        <button type="button" data-role="historical_2023_1">Después</button>
+      </div>
+      <label class="check"><input type="checkbox" id="show-splits" checked> Mostrar bloques de prueba</label>
+    </section>
+
+    <section class="block">
+      <button type="button" id="draw" class="primary">Dibujar área a analizar</button>
+      <p class="meta" id="draw-hint">Hacé clic en el botón y arrastrá sobre el mapa. Máximo <span id="max-area">4</span> km².</p>
+    </section>
+
+    <section class="block result" id="result" hidden>
+      <span class="label">Resultado</span>
+      <div class="kpi">
+        <span class="kpi-value" id="r-loss">–</span>
+        <span class="kpi-unit">ha de pérdida de bosque</span>
+      </div>
+      <dl class="facts">
+        <dt>MapBiomas (referencia)</dt><dd id="r-mb">–</dd>
+        <dt>Acuerdo con MapBiomas</dt><dd id="r-agree">–</dd>
+        <dt>Área analizada</dt><dd id="r-area">–</dd>
+        <dt>Píxeles observables</dt><dd id="r-valid">–</dd>
+        <dt>Bloque del dataset</dt><dd id="r-split">–</dd>
+        <dt>Tiempo de inferencia</dt><dd id="r-time">–</dd>
+      </dl>
+      <p class="note">La referencia es MapBiomas Chaco Col. 5 (pseudoetiqueta, no verdad de terreno).</p>
+    </section>
+
+    <p class="error" id="error" role="alert" hidden></p>
+
+    <footer class="legend">
+      <span><i class="sw sw-loss"></i>Pérdida detectada</span>
+      <span><i class="sw sw-nodata"></i>No observable</span>
+      <span><i class="sw sw-test"></i>Bloque de prueba</span>
+      <span><i class="sw sw-train"></i>Bloque de entrenamiento o validación</span>
+    </footer>
+  </aside>
+
+  <main id="map" aria-label="Mapa"></main>
+
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
