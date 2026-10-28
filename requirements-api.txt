@@ -1,0 +1,5 @@
+-r requirements-train.txt
+# API REST (fase 4).
+fastapi==0.120.0
+uvicorn==0.38.0
+httpx==0.28.1
