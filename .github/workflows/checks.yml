@@ -30,5 +30,6 @@ jobs:
           curl -sf http://127.0.0.1:8000/visor/ | grep -q 'leaflet.js'
           curl -sf http://127.0.0.1:8000/visor/vendor/leaflet/leaflet.js > /dev/null
           docker exec visor python -c "import sys; sys.path.insert(0, 'src'); import torch, rasterio, chaco_monitor.inference"
-          docker logs visor
-          docker rm -f visor
+      - name: Logs del contenedor
+        if: always()
+        run: docker logs visor || true
