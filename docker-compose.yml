@@ -1,0 +1,11 @@
+# Uso:  docker compose up --build   →  abrir http://127.0.0.1:8000/
+services:
+  visor:
+    build: .
+    image: monitoreo-chaco:latest
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      # Solo lectura: el contenedor no puede modificar los datos ni el modelo.
+      - ./data:/app/data:ro
+      - ./models:/app/models:ro

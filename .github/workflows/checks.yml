@@ -15,3 +15,20 @@ jobs:
         shell: bash
         run: |
           python scripts/check_repository.py
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construir imagen
+        run: docker build -t monitoreo-chaco .
+      - name: Prueba de humo (sin datos montados)
+        run: |
+          docker run -d --name visor -p 8000:8000 monitoreo-chaco
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/health && break; sleep 2; done
+          curl -sf http://127.0.0.1:8000/health | grep -q '"modelo":false'
+          curl -sf http://127.0.0.1:8000/visor/ | grep -q 'leaflet.js'
+          curl -sf http://127.0.0.1:8000/visor/vendor/leaflet/leaflet.js > /dev/null
+          docker exec visor python -c "import sys; sys.path.insert(0, 'src'); import torch, rasterio, chaco_monitor.inference"
+          docker logs visor
+          docker rm -f visor
