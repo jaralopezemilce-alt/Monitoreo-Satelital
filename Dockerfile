@@ -5,6 +5,10 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
 WORKDIR /app
 
+# rasterio necesita libexpat, que no viene en la imagen slim.
+RUN apt-get update && apt-get install -y --no-install-recommends libexpat1 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Torch solo CPU (unos 200 MB en vez de varios GB con CUDA).
 RUN pip install --index-url https://download.pytorch.org/whl/cpu torch==2.8.0
 COPY requirements.txt ./
