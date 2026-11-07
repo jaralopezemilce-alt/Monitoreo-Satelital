@@ -9,11 +9,16 @@ Variables de entorno (todas opcionales):
     CHACO_INPUTS        carpeta de ingesta      (data/interim/historical-inputs-v1)
     CHACO_LABELS        etiquetas MapBiomas     (data/interim/labels-mapbiomas-v1)
     CHACO_MODEL         pesos de la U-Net       (models/unet-v1.pt)
+    CHACO_DATASET       dataset de parches      (data/processed/dataset-v1)
     CHACO_MAX_AREA_KM2  área máxima por pedido  (4)
+
+El visor web queda en http://127.0.0.1:8000/visor/
 """
 
 from __future__ import annotations
 
+import csv
+import json
 import os
 import sys
 import time
@@ -26,7 +31,9 @@ sys.path.insert(0, str(ROOT / "src"))
 import rasterio  # noqa: E402
 from fastapi import FastAPI, HTTPException  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
-from fastapi.responses import Response  # noqa: E402
+from fastapi.responses import RedirectResponse, Response  # noqa: E402
+from fastapi.staticfiles import StaticFiles  # noqa: E402
+from pyproj import Transformer  # noqa: E402
 from pydantic import BaseModel, Field  # noqa: E402
 
 from chaco_monitor.inference import (  # noqa: E402
@@ -42,6 +49,7 @@ def _path(env: str, default: str) -> Path:
 INPUTS = _path("CHACO_INPUTS", "data/interim/historical-inputs-v1")
 LABELS = _path("CHACO_LABELS", "data/interim/labels-mapbiomas-v1")
 MODEL = _path("CHACO_MODEL", "models/unet-v1.pt")
+DATASET = _path("CHACO_DATASET", "data/processed/dataset-v1")
 MAX_AREA_KM2 = float(os.environ.get("CHACO_MAX_AREA_KM2", "4"))
 
 app = FastAPI(title="Monitor de deforestación del Chaco", version="0.1.0",
@@ -88,9 +96,17 @@ def health():
 
 @app.get("/zones")
 def zones():
-    return [{"id": z.id, "crs": z.crs, "bbox": [round(v, 6) for v in z.bbox_wgs84],
-             "shape": list(z.shape), "fechas": z.dates, "pares": list(PAIRS)}
-            for z in store().zones.values()]
+    out = []
+    for z in store().zones.values():
+        h, w = z.shape
+        to_wgs = Transformer.from_crs(z.crs, "EPSG:4326", always_xy=True)
+        ring = [list(to_wgs.transform(*(z.transform * (c, r)))) for c, r in
+                [(0, 0), (w, 0), (w, h), (0, h), (0, 0)]]
+        out.append({"id": z.id, "crs": z.crs, "bbox": [round(v, 6) for v in z.bbox_wgs84],
+                    "outline": [[round(x, 6), round(y, 6)] for x, y in ring],
+                    "shape": list(z.shape), "fechas": z.dates, "pares": list(PAIRS),
+                    "max_area_km2": MAX_AREA_KM2})
+    return out
 
 
 @app.get("/zones/{zone_id}/rgb/{role}.png")
@@ -157,8 +173,34 @@ def predict(req: PredictRequest):
     return result
 
 
-@app.get("/")
-def root():
-    return {"mensaje": "API del monitor de deforestación. Ver /docs", "endpoints":
-            ["/health", "/zones", "/zones/{zona}/rgb/{rol}.png", "POST /predict"]}
+@app.get("/zones/{zone_id}/splits")
+def zone_splits(zone_id: str):
+    """Bloques espaciales del dataset con su split (train/val/test) como polígonos WGS84.
 
+    Sirve para que la demo use áreas de test, que el modelo no vio al entrenar.
+    """
+    zone = get_zone(zone_id)
+    index, config = DATASET / "index.csv", DATASET / "config.json"
+    if not index.exists() or not config.exists():
+        return {"type": "FeatureCollection", "features": [], "nota": f"No hay dataset en {DATASET}"}
+    block = int(json.loads(config.read_text(encoding="utf-8"))["block_px"])
+    with index.open(encoding="utf-8", newline="") as f:
+        blocks = {r["block"]: r["split"] for r in csv.DictReader(f) if r["zone"] == zone.id}
+    to_wgs = Transformer.from_crs(zone.crs, "EPSG:4326", always_xy=True)
+    feats = []
+    for key, split in sorted(blocks.items()):
+        br, bc = (int(v) for v in key.split("_"))
+        corners = [(bc, br), (bc + 1, br), (bc + 1, br + 1), (bc, br + 1), (bc, br)]
+        ring = [list(to_wgs.transform(*(zone.transform * (c * block, r * block)))) for c, r in corners]
+        feats.append({"type": "Feature", "properties": {"block": key, "split": split},
+                      "geometry": {"type": "Polygon", "coordinates": [[[round(x, 6), round(y, 6)] for x, y in ring]]}})
+    return {"type": "FeatureCollection", "features": feats}
+
+
+@app.get("/", include_in_schema=False)
+def root():
+    return RedirectResponse("/visor/")
+
+
+if (ROOT / "web" / "index.html").exists():
+    app.mount("/visor", StaticFiles(directory=ROOT / "web", html=True), name="visor")
