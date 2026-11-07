@@ -6,6 +6,10 @@ Proyecto académico de segmentación bosque/no bosque y detección de pérdida d
 
 **Ingesta multiespectral A/B completada; etiquetas pendientes.** A (Boquerón) y B (Alto Paraguay) están aprobadas y C (Presidente Hayes) queda en reserva. Hay ocho recortes para demo/control y cuatro recortes históricos ampliados, pero todavía no hay dataset etiquetado, pesos entrenados, API ni visor implementados.
 
+Proyecto Google Cloud compartido informado: `proyecto-deforestacion-510013`. `scripts/fase2_export_mapbiomas.py` permite exportar las etiquetas MapBiomas desde Python con la misma grilla que `export_mapbiomas_pilot.js`, y `scripts/fase2_make_patches.py` corta parches sobre la ingesta histórica (`docs/fase2-dataset.md`). La exportación autenticada real y su auditoría están pendientes; conocer el ID no demuestra permisos efectivos.
+
+La generación de parches conserva el dataset anterior si falla y rechaza salidas vacías o sin muestras en train/val/test. Ver `docs/fase2-correcciones.md` para reproducir las comprobaciones y distinguir correcciones de código de validación científica.
+
 Los recortes de inspección no son el dataset final. Las fechas recientes tienen observaciones utilizables, pero la inspección inicial no confirma un desmonte nuevo inequívoco entre mayo y septiembre de 2026; no se presentará un cambio estacional como deforestación.
 
 ## Objetivo y alcance
@@ -63,6 +67,19 @@ En Linux/macOS:
 python3.12 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python -m pytest -q
+```
+
+## Scripts de Earth Engine (fases 1 y 2)
+
+Requieren `requirements-gee.txt`, `earthengine authenticate` y la variable `GEE_PROJECT` con el ID del proyecto compartido:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-gee.txt
+.\.venv\Scripts\earthengine.exe authenticate
+setx GEE_PROJECT "proyecto-deforestacion-510013"   # reabrir la terminal después
+.\.venv\Scripts\python.exe scripts/fase1_ndvi_baseline.py --zone A_boqueron
+.\.venv\Scripts\python.exe scripts/fase2_export_mapbiomas.py
+.\.venv\Scripts\python.exe scripts/fase2_make_patches.py
 ```
 
 ## Reproducir la prospección
