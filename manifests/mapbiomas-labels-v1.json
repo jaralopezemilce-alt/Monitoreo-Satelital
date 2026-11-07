@@ -1,0 +1,137 @@
+{
+  "version": "mapbiomas-labels-v1",
+  "generated": "2026-10-27",
+  "files": [
+    {
+      "path": "A_boqueron_mapbiomas_c5_v2_2022.tif",
+      "zone": "A_boqueron",
+      "year": 2022,
+      "asset": "projects/mapbiomas-public/assets/chaco/lulc/collection5/mapbiomas_chaco_collection5_integration_v2",
+      "band": "classification_2022",
+      "nodata": 255,
+      "crs": "EPSG:32720",
+      "transform": [
+        30.0,
+        0.0,
+        744980.0,
+        0.0,
+        -30.0,
+        7591690.0
+      ],
+      "shape": [
+        334,
+        334
+      ],
+      "class_pct": {
+        "3": 66.238,
+        "6": 0.037,
+        "15": 24.336,
+        "57": 9.389
+      },
+      "unknown_codes": {},
+      "bytes": 3042,
+      "sha256": "181d12d1b2be07eac8e1217799f3b499191db1f8e2f5a554fbf01750ed59f4d6",
+      "license": "MapBiomas Chaco, CC BY 4.0"
+    },
+    {
+      "path": "A_boqueron_mapbiomas_c5_v2_2023.tif",
+      "zone": "A_boqueron",
+      "year": 2023,
+      "asset": "projects/mapbiomas-public/assets/chaco/lulc/collection5/mapbiomas_chaco_collection5_integration_v2",
+      "band": "classification_2023",
+      "nodata": 255,
+      "crs": "EPSG:32720",
+      "transform": [
+        30.0,
+        0.0,
+        744980.0,
+        0.0,
+        -30.0,
+        7591690.0
+      ],
+      "shape": [
+        334,
+        334
+      ],
+      "class_pct": {
+        "3": 44.264,
+        "6": 0.047,
+        "11": 0.097,
+        "15": 39.287,
+        "26": 0.005,
+        "57": 16.3
+      },
+      "unknown_codes": {},
+      "bytes": 6536,
+      "sha256": "43608bcedc1be2c3fa76a92692d11f8a9ef315e72f0d57fb9536502dd7b46f5c",
+      "license": "MapBiomas Chaco, CC BY 4.0"
+    },
+    {
+      "path": "B_alto_paraguay_mapbiomas_c5_v2_2022.tif",
+      "zone": "B_alto_paraguay",
+      "year": 2022,
+      "asset": "projects/mapbiomas-public/assets/chaco/lulc/collection5/mapbiomas_chaco_collection5_integration_v2",
+      "band": "classification_2022",
+      "nodata": 255,
+      "crs": "EPSG:32721",
+      "transform": [
+        30.0,
+        0.0,
+        244250.0,
+        0.0,
+        -30.0,
+        7752520.0
+      ],
+      "shape": [
+        334,
+        334
+      ],
+      "class_pct": {
+        "3": 42.995,
+        "4": 0.689,
+        "6": 0.004,
+        "11": 0.029,
+        "15": 55.683,
+        "26": 0.071,
+        "57": 0.529
+      },
+      "unknown_codes": {},
+      "bytes": 4674,
+      "sha256": "e7ec4391faf024decb2a6dd750530c72123f13e8d1d42127f34448b9fb134375",
+      "license": "MapBiomas Chaco, CC BY 4.0"
+    },
+    {
+      "path": "B_alto_paraguay_mapbiomas_c5_v2_2023.tif",
+      "zone": "B_alto_paraguay",
+      "year": 2023,
+      "asset": "projects/mapbiomas-public/assets/chaco/lulc/collection5/mapbiomas_chaco_collection5_integration_v2",
+      "band": "classification_2023",
+      "nodata": 255,
+      "crs": "EPSG:32721",
+      "transform": [
+        30.0,
+        0.0,
+        244250.0,
+        0.0,
+        -30.0,
+        7752520.0
+      ],
+      "shape": [
+        334,
+        334
+      ],
+      "class_pct": {
+        "3": 26.372,
+        "4": 0.013,
+        "6": 0.073,
+        "15": 59.412,
+        "26": 0.083,
+        "57": 14.048
+      },
+      "unknown_codes": {},
+      "bytes": 4077,
+      "sha256": "035d5346cb6b8ae1a174ef8effe6b388fdaff7e20ba697efeebeba3592dac9b1",
+      "license": "MapBiomas Chaco, CC BY 4.0"
+    }
+  ]
+}
