@@ -1,172 +1,105 @@
 # Monitoreo Satelital del Chaco Paraguayo
 
-Proyecto académico de segmentación bosque/no bosque y detección de pérdida de cobertura entre fechas. Entrega prevista: **9 de noviembre de 2026**; equipo de dos integrantes, presupuesto cero, entrenamiento en GPU gratuita y demo con inferencia en CPU.
+Proyecto académico de detección de pérdida estimada de cobertura boscosa entre imágenes Sentinel-2 mediante una U-Net, una API REST y un visor geográfico web. Presentación: 9 de noviembre de 2026.
 
-## Estado real (8/11/2026)
+## Estado y alcance de la versión presentada
 
-**Sistema completo y funcionando**, con datos reales y sin resultados simulados:
+Prototipo funcional offline sobre dos zonas piloto: Boquerón y Alto Paraguay. La inferencia se ejecuta sobre el rectángulo seleccionado y datos locales preparados; no consiste en reproducir polígonos de resultado previamente guardados. No es un servicio de monitoreo de todo el Chaco ni de actualización automática.
 
-| Componente | Estado | Dónde |
-|---|---|---|
-| Ingesta Sentinel-2 L2A, zonas A (Boquerón) y B (Alto Paraguay), 2022→2023 | Listo | `scripts/prepare_pilot.py`, `manifests/` |
-| Etiquetas MapBiomas Chaco Col. 5 (bosque = clases 3, 4, 6) | Listo | `scripts/fase2_export_mapbiomas.py`, `manifests/mapbiomas-labels-v1.json` |
-| Dataset de parches 128×128 con partición espacial por bloques | Listo | `scripts/fase2_make_patches.py`, `docs/fase2-dataset.md` |
-| U-Net (10 canales) + línea base dNDVI, 3 semillas | Listo | `scripts/fase3_train.py`, `docs/fase3-entrenamiento.md` |
-| Métricas de prueba y matrices de confusión | Listo | **`docs/resultados.md`** |
-| API REST (FastAPI) con inferencia real | Listo | `api/`, `api/README.md` |
-| Visor web (Leaflet, offline) | Listo | `web/`, `web/README.md` |
-| Docker (extra) | Listo | `Dockerfile`, `docker-compose.yml`, `docs/docker.md` |
+| Componente | Implementación y evidencia |
+|---|---|
+| Imágenes | Sentinel-2 L2A, par histórico 2022–2023; scripts/prepare_pilot.py |
+| Referencia | MapBiomas Chaco Colección 5, integración v2; manifiesto manifests/mapbiomas-labels-v1.json |
+| Dataset | Parches de 128 × 128 píxeles y partición por bloques; docs/fase2-dataset.md |
+| Modelo | U-Net de 10 canales: B2/B3/B4/B8/NDVI de cada fecha; tres semillas de entrenamiento |
+| Comparación | Línea base dNDVI y métricas de prueba; docs/resultados.md |
+| API | FastAPI, POST /predict; api/main.py |
+| Interfaz | Leaflet, imágenes locales y resultados en rojo; web/ |
+| Despliegue | Dockerfile y docker-compose.yml; requiere datos y pesos locales |
 
-Resultado principal en prueba (modelo desplegado, semilla 42): **IoU 0,663 · F1 0,797** frente a IoU 0,578 · F1 0,733 de la línea base dNDVI. Detalle en `docs/resultados.md`.
+La salida es una estimación de pérdida de cobertura boscosa, no una certificación de deforestación, una atribución de causa ni un dictamen legal.
 
-## Cómo ejecutar el visor
+## Ejecutar el visor
 
-Requiere en disco `data/interim/historical-inputs-v1`, `data/interim/labels-mapbiomas-v1`, `data/processed/dataset-v1` y `models/unet-v1.pt` (no están en Git; ver "Datos, licencias y pesos").
+Desde la raíz del repositorio, con el entorno virtual preparado:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements-api.txt   # una vez
+.\.venv\Scripts\python.exe -m pip install -r requirements-api.txt
 .\.venv\Scripts\python.exe -m uvicorn api.main:app --port 8000
 ```
 
-o con Docker: `docker compose up --build`. Abrir <http://127.0.0.1:8000/>, elegir zona, **Dibujar área a analizar** (≤ 4 km²) dentro de un bloque de prueba (borde amarillo). La pérdida detectada aparece en rojo, lo no observable en gris. Swagger de la API: <http://127.0.0.1:8000/docs>.
+Abrir http://127.0.0.1:8000/. Documentación de la API: http://127.0.0.1:8000/docs.
 
-## Objetivo y alcance
+El modelo requiere models/unet-v1.pt y la ingesta data/interim/historical-inputs-v1. Para mostrar la comparación con MapBiomas y los bloques del dataset también deben estar disponibles data/interim/labels-mapbiomas-v1 y data/processed/dataset-v1. Los archivos pesados no están incluidos en Git. Clonar el repositorio no basta para ejecutar la demo completa.
 
-- Demo principal con el par histórico 2022/2023, dentro de A/B y con datos locales.
-- Par reciente de mayo/septiembre de 2026 como prueba de estabilidad y falsas alertas.
-- Insumos históricos ampliados a 100 km² por zona para entrenamiento posterior.
-- U-Net compacta con canales B2/B3/B4/B8/NDVI y baseline de umbral NDVI.
-- FastAPI e interfaz local; ejecución en CPU y medición de latencia real.
-- Inferencia en vivo sobre datos preparados, no reproducción de resultados fijos.
-- Modo online opcional con área limitada, timeout y retorno explícito al modo offline.
-- Informe IEEE en español, exactamente tres páginas incluyendo referencias; defensa de diez minutos y dos de preguntas.
-
-La salida será **pérdida de bosque estimada**, no una certificación legal ni una atribución de causa. Las nubes, sombras y píxeles ambiguos se excluirán; no se contabilizarán como no bosque.
-
-## Estructura
-
-```text
-.github/workflows/       Pruebas automáticas
-api/                    FastAPI, pendiente
-configs/                Zonas y configuración de ejecución
-data/
-  raw/                  Datos originales, fuera de Git
-  interim/              Intermedios, fuera de Git
-  processed/            Dataset final, fuera de Git
-docs/                   Plan, fuentes, diseño y revisión
-docs/evidence/          Miniaturas y tablas pequeñas de prospección
-manifests/              Metadatos, URLs y checksums
-models/                 Pesos, fuera de Git
-notebooks/              Entrenamiento Colab/Kaggle, pendiente
-outputs/                Resultados de ejecuciones, fuera de Git
-scripts/                Prospección y controles del repositorio
-src/chaco_monitor/      Funciones reutilizables
-tests/                  Pruebas
-web/                    Visor, pendiente
-```
-
-## Instalación en Windows 11
-
-Usar Python 3.12 de 64 bits y Git. Estos comandos se ejecutan desde PowerShell en la raíz del repositorio y no requieren activar scripts de PowerShell:
+Alternativa con Docker, si ya está instalado y configurado:
 
 ```powershell
-git clone https://github.com/jaralopezemilce-alt/Monitoreo-Satelital.git
-cd Monitoreo-Satelital
-py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m pytest -q
+docker compose up --build
 ```
 
-El repositorio es privado: la segunda integrante necesita una invitación del propietario. No colocar tokens en archivos ni comandos versionados.
+Docker monta data/ y models/ en solo lectura; no descarga automáticamente los insumos ni entrena el modelo.
 
-En Linux/macOS:
+## Uso y significado de los bloques amarillos
 
-```bash
-python3.12 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
-.venv/bin/python -m pytest -q
-```
+1. Elegir una zona piloto.
+2. Comparar las imágenes antes/después.
+3. Dibujar un rectángulo dentro de la cobertura precargada, de menos de 4 km² para evitar exceder el límite al ajustar a la grilla de píxeles.
+4. El sistema ejecuta la predicción y muestra hectáreas estimadas, superficie observable y tiempo de procesamiento. Rojo: pérdida estimada. Gris: no observable.
 
-## Scripts de Earth Engine (fases 1 y 2)
+El amarillo identifica bloques reservados para prueba. Se recomienda usarlos en la demostración para no presentar áreas de entrenamiento como evaluación independiente. No es una frontera de funcionamiento del modelo: el visor permite solicitar otras áreas dentro de la cobertura disponible y del límite de superficie. Fuera de las zonas precargadas la solicitud se rechaza por falta de cobertura de los insumos locales.
 
-Requieren `requirements-gee.txt`, `earthengine authenticate` y la variable `GEE_PROJECT` con el ID del proyecto compartido:
+## Resultados documentados
 
-```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements-gee.txt
-.\.venv\Scripts\earthengine.exe authenticate
-setx GEE_PROJECT "proyecto-deforestacion-510013"   # reabrir la terminal después
-.\.venv\Scripts\python.exe scripts/fase1_ndvi_baseline.py --zone A_boqueron
-.\.venv\Scripts\python.exe scripts/fase2_export_mapbiomas.py
-.\.venv\Scripts\python.exe scripts/fase2_make_patches.py
-```
+| Método | IoU de pérdida | F1 de pérdida |
+|---|---:|---:|
+| U-Net desplegada, semilla 42 | 0,6632 | 0,7975 |
+| Línea base dNDVI | 0,5783 | 0,7329 |
 
-## Reproducir la prospección
+Prueba: ocho parches, 131 072 píxeles, sobre el par 2022–2023. La referencia son pseudoetiquetas MapBiomas, no observaciones de terreno. Época y umbral se seleccionaron con validación. Las semillas adicionales describen variabilidad sobre el mismo conjunto de prueba. Matrices de confusión y demás métricas: docs/resultados.md.
 
-La primera ejecución requiere internet y descarga dos tiles comprimidos de Hansen. No es necesaria para ejecutar las pruebas unitarias ni será parte del arranque de la demo.
+La medición de 0,26 s para 3,36 km² es informal y de una sola repetición en CPU. No representa una garantía de latencia, no incluye descarga de imágenes ni tiempo del navegador.
 
-```powershell
-.\.venv\Scripts\python.exe scripts/scout_sources.py --cache data/raw/hansen --out outputs/prospection
-.\.venv\Scripts\python.exe scripts/review_candidates.py --evidence outputs/prospection --raw data/raw/hansen --out outputs/review
-```
+## Limitaciones
 
-Consultar `docs/evidence/selected_scenes.csv` para IDs, fechas, nubosidad de escena y calidad local por SCL. Los porcentajes locales son de una grilla reducida de inspección, no la evaluación final a resolución nativa.
+- Cobertura territorial: no se implementó el procesamiento de cualquier ubicación del Chaco. La versión utiliza imágenes descargadas, alineadas y preparadas para dos zonas piloto. Falta integrar al visor la búsqueda, descarga y preparación automática de imágenes de nuevas ubicaciones y validar allí el modelo. Esta es una limitación de la implementación y su evaluación, no una imposibilidad del método.
+- Superficie por consulta: el límite predeterminado es 4 km², equivalentes a 400 ha. Es configurable mediante CHACO_MAX_AREA_KM2; no demuestra una capacidad máxima de la U-Net. El rendimiento y consumo de memoria con superficies mayores no están caracterizados.
+- Temporalidad: la API y el visor actuales usan 2022–2023. No se cumplió el monitoreo validado de los últimos meses. Los insumos o planes relativos a 2026 no equivalen a una evaluación realizada ni a un par habilitado en la interfaz.
+- Referencia: MapBiomas aporta mapas anuales de 30 m. Su remuestreo a 10 m no agrega detalle real y la etiqueta anual puede no coincidir con la fecha exacta de Sentinel-2. La definición operativa de bosque usa clases 3, 4 y 6; ver src/chaco_monitor/labels.py.
+- Validación: solo dos zonas y un par temporal; conjunto de prueba pequeño. No se completaron una referencia visual manual independiente, evaluación sobre 2026 ni IoU por clase/mIoU. Los bloques no tienen una franja de separación adicional, por lo que no se ha demostrado independencia espacial completa.
+- Representatividad: los estudios de caso se seleccionaron buscando cambios conocidos; no permiten estimar la deforestación regional ni garantizar generalización a todo el Chaco.
+- Visualización: la vectorización omite manchas menores de 0,04 ha; el total de hectáreas se calcula sobre los píxeles positivos antes de ese filtro, por lo que puede diferir de la suma de polígonos visibles.
+- Reproducibilidad: datos y pesos se distribuyen fuera de Git. El enlace de distribución y sus permisos no están especificados aquí; deben coordinarse con las autoras. No hay descarga automática del paquete de demo.
+- Alcance científico: no se atribuyen causas ni se confirma desmonte con verificación de campo. El acuerdo mostrado contra MapBiomas en una consulta no reemplaza las métricas del conjunto de prueba.
 
-## Reproducir o verificar la ingesta
+## Trabajo futuro
 
-La ingesta interpreta la radiometría según colección, alinea fechas a UTM de 10 m
-y produce B02/B03/B04/B08/NDVI, SCL y máscara de observabilidad. Esa máscara
-**no es bosque/no bosque** y no reemplaza las etiquetas.
+Integrar ingesta para nuevas ubicaciones y fechas; ampliar y diversificar entrenamiento y prueba; validar cambios recientes con referencia independiente; evaluar superficies mayores y latencia con repeticiones; incorporar separación espacial adicional y documentar la distribución reproducible de datos y pesos. Estas mejoras no se presentan como implementadas.
 
-```powershell
-.\.venv\Scripts\python.exe scripts/prepare_pilot.py --out data/interim/pilot-v1
-.\.venv\Scripts\python.exe scripts/prepare_pilot.py --zones configs/training_zones.geojson --historical-only --out data/interim/historical-inputs-v1
-```
+## Estructura y documentación
 
-Los dos paquetes de datos se entregan como adjuntos de la conversación, fuera de Git.
-Después de descomprimirlos dentro de `data/interim/`, estos controles no necesitan internet:
+- api/: API REST y servicio del visor.
+- web/: interfaz Leaflet y dependencias locales.
+- src/chaco_monitor/: preprocesamiento, etiquetas, dataset, modelo e inferencia.
+- scripts/: ingesta, exportación, entrenamiento y controles.
+- configs/ y manifests/: configuración y trazabilidad.
+- tests/: pruebas automatizadas.
+- docs/: metodología, fuentes, resultados y despliegue.
+- data/, models/ y outputs/: datos, pesos y salidas locales no versionados.
 
-```powershell
-.\.venv\Scripts\python.exe scripts/verify_ingestion.py data/interim/pilot-v1
-.\.venv\Scripts\python.exe scripts/verify_ingestion.py data/interim/historical-inputs-v1
-```
+La exportación MapBiomas está registrada en manifests/mapbiomas-labels-v1.json, generado el 27/10/2026. Algunas notas de planificación en docs/ conservan estados anteriores; para el alcance presentado consultar este README, los manifiestos y docs/resultados.md.
 
-Para MapBiomas, seguir `docs/mapbiomas-export.md`; no se ha ejecutado una exportación
-autenticada. Leer `docs/ingestion-stage-report.md` para resultados, limitaciones y
-qué debe verificarse antes de la siguiente etapa.
-
-## Datos, licencias y pesos
-
-No se versionarán TIFF/JP2, pesos ni datos de entrenamiento. Se propone Drive o Kaggle para el paquete compartido; el proveedor, enlace y permisos definitivos están pendientes de acuerdo. El repositorio conservará manifiestos con nombre, tamaño, SHA-256, procedencia, licencia y versión.
-
-No se activó Git LFS por defecto, para no introducir cuotas como dependencia del proyecto. Las miniaturas de evidencia son pequeñas; no sustituyen los originales.
-
-Los datos Sentinel son abiertos y requieren atribución para sus derivados; la fórmula aplicable es “Contains modified Copernicus Sentinel data [Year]” ([aviso legal Copernicus](https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice)). Hansen GFC 2025 v1.13 se distribuye bajo CC BY 4.0, con crédito Hansen/UMD/Google/USGS/NASA ([distribución](https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/download.html)).
-
-Las demás fuentes y el acceso pendiente a MapBiomas están documentados en `docs/sources.md`. No se concede aún una licencia pública al código: el repositorio sigue privado y esa decisión corresponde a sus autoras.
-
-## Reproducibilidad y evaluación
-
-- Semilla oficial 42, fijada antes de evaluar en prueba; semillas 1 y 2 para medir variabilidad.
-- Partición espacial por bloques de 256 px antes de generar parches.
-- Época (mejor IoU de validación) y umbral (mejor F1 de validación) elegidos sólo con validación.
-- IoU, F1, precisión, recall, accuracy y matriz de confusión de la clase pérdida: `docs/resultados.md`.
-- Tiempo de inferencia: medición informal en CPU (ver `docs/resultados.md`).
-- Sin resultados simulados ni métricas inventadas.
-
-**No realizado** (limitaciones declaradas): referencia visual manual de test, evaluación sobre el par 2026, IoU por clase/mIoU y medición de latencia con repeticiones.
-
-## Cómo verificar el estado actual
+## Verificación local
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q
 .\.venv\Scripts\python.exe scripts/check_repository.py
-git log --oneline
 ```
 
-Las pruebas (`tests/`) cubren coordenadas, radiometría, NDVI, máscaras, dataset, modelo, inferencia, API y servicio del visor. En CI se ejecutan las que no requieren PyTorch/FastAPI y además se construye la imagen Docker con una prueba de humo.
+Estos comandos deben ejecutarse en el entorno local correspondiente. La lectura del repositorio no verifica por sí sola que los datos estén instalados ni que la demo funcione en otra computadora.
 
-## Flujo de trabajo del equipo
+## Fuentes, licencias y preparación de datos
 
-Crear ramas cortas por tarea, commits pequeños y revisión cruzada. Ejemplos: `feat: validar area de consulta`, `test: cubrir bbox invalida`, `docs: registrar licencia Sentinel`.
+Consultar docs/sources.md, docs/mapbiomas-export.md, docs/fase2-dataset.md, docs/fase3-entrenamiento.md y docs/docker.md. Las fases de Earth Engine requieren requirements-gee.txt, autenticación y GEE_PROJECT; no son necesarias para cada inferencia con datos ya preparados.
 
-No reescribir commits compartidos ni añadir resultados manuales como si fueran salidas del modelo. Cada fase termina con evidencia, instrucciones de verificación y aprobación antes de continuar.
+Atribuciones: Contains modified Copernicus Sentinel data [Year], usando el año de los insumos correspondientes; MapBiomas Chaco, CC BY 4.0; Hansen/UMD/Google/USGS/NASA, GFC 2025 v1.13, CC BY 4.0, utilizado en prospección. Las condiciones y procedencia se documentan en docs/sources.md. No se declara una licencia pública del código en este README.
