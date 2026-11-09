@@ -11,7 +11,7 @@ Datos reales; nada simulado. Conjunto de **prueba**: 8 parches de 128 × 128 px 
 | **U-Net semilla 42 (desplegado)** | 0,50 | **0,6632** | **0,7975** | 0,8107 | 0,7848 | 0,8110 |
 | U-Net semilla 1 | 0,50 | 0,6864 | 0,8140 | 0,8084 | 0,8197 | 0,8223 |
 | U-Net semilla 2 | 0,45 | 0,6885 | 0,8155 | 0,8375 | 0,7947 | 0,8295 |
-| U-Net, media ± desvío (3 semillas) | – | 0,679 ± 0,014 | 0,809 ± 0,010 | 0,819 ± 0,017 | 0,800 ± 0,018 | 0,821 ± 0,009 |
+| U-Net, media ± desvío (3 semillas) | – | 0,679 ± 0,014 | 0,809 ± 0,010 | 0,819 ± 0,016 | 0,800 ± 0,018 | 0,821 ± 0,009 |
 | Línea base dNDVI (NDVI₂₀₂₃ − NDVI₂₀₂₂ < umbral) | −0,125 | 0,5783 | 0,7329 | 0,8162 | 0,6649 | 0,7701 |
 
 La media ± desvío describe la variabilidad entre tres ejecuciones sobre el **mismo** conjunto de prueba, no tres conjuntos independientes.
