@@ -1,6 +1,6 @@
 # Monitoreo Satelital del Chaco Paraguayo
 
-Proyecto académico de segmentación bosque/no bosque y detección de pérdida de cobertura entre fechas. Entrega prevista: **9 de noviembre de 2026**; equipo de dos integrantes, presupuesto cero, entrenamiento en GPU gratuita y demo con inferencia en CPU.
+Proyecto académico de segmentación bosque/no bosque y detección de pérdida de cobertura entre fechas. Entrega prevista: **9 de noviembre de 2026**; equipo de dos integrantes, presupuesto cero; entrenamiento e inferencia en CPU (notebook sin GPU).
 
 ## Estado real (8/11/2026)
 
@@ -28,7 +28,7 @@ Requiere en disco `data/interim/historical-inputs-v1`, `data/interim/labels-mapb
 .\.venv\Scripts\python.exe -m uvicorn api.main:app --port 8000
 ```
 
-o con Docker: `docker compose up --build`. Abrir <http://127.0.0.1:8000/>, elegir zona, **Dibujar área a analizar** (≤ 4 km²) dentro de un bloque de prueba (borde amarillo). La pérdida detectada aparece en rojo, lo no observable en gris. Swagger de la API: <http://127.0.0.1:8000/docs>.
+o con Docker: `docker compose up --build`. El límite por consulta es 4 km² por defecto y se puede cambiar con la variable de entorno `CHACO_MAX_AREA_KM2` (para respuestas rápidas en CPU). Abrir <http://127.0.0.1:8000/>, elegir zona, **Dibujar área a analizar** (≤ 4 km²) dentro de un bloque de prueba (borde amarillo). La pérdida detectada aparece en rojo, lo no observable en gris. Fuera de los bloques amarillos el modelo también predice, pero esas áreas se usaron para entrenar o validar, así que el acuerdo con MapBiomas ahí no es una evaluación justa; el panel indica a qué conjunto pertenece el área. Swagger de la API: <http://127.0.0.1:8000/docs>.
 
 ## Objetivo y alcance
 
@@ -47,7 +47,7 @@ La salida será **pérdida de bosque estimada**, no una certificación legal ni 
 
 ```text
 .github/workflows/       Pruebas automáticas
-api/                    FastAPI, pendiente
+api/                    API FastAPI (inferencia real)
 configs/                Zonas y configuración de ejecución
 data/
   raw/                  Datos originales, fuera de Git
@@ -57,12 +57,12 @@ docs/                   Plan, fuentes, diseño y revisión
 docs/evidence/          Miniaturas y tablas pequeñas de prospección
 manifests/              Metadatos, URLs y checksums
 models/                 Pesos, fuera de Git
-notebooks/              Entrenamiento Colab/Kaggle, pendiente
+notebooks/              Notas (el entrenamiento se hace con scripts/fase3_train.py)
 outputs/                Resultados de ejecuciones, fuera de Git
 scripts/                Prospección y controles del repositorio
 src/chaco_monitor/      Funciones reutilizables
 tests/                  Pruebas
-web/                    Visor, pendiente
+web/                    Visor Leaflet offline
 ```
 
 ## Instalación en Windows 11
@@ -130,19 +130,19 @@ Después de descomprimirlos dentro de `data/interim/`, estos controles no necesi
 .\.venv\Scripts\python.exe scripts/verify_ingestion.py data/interim/historical-inputs-v1
 ```
 
-Para MapBiomas, seguir `docs/mapbiomas-export.md`; no se ha ejecutado una exportación
-autenticada. Leer `docs/ingestion-stage-report.md` para resultados, limitaciones y
+Para MapBiomas, seguir `docs/mapbiomas-export.md` (exportación ya realizada con
+`scripts/fase2_export_mapbiomas.py`; registro en `manifests/mapbiomas-labels-v1.json`). Leer `docs/ingestion-stage-report.md` para resultados, limitaciones y
 qué debe verificarse antes de la siguiente etapa.
 
 ## Datos, licencias y pesos
 
-No se versionarán TIFF/JP2, pesos ni datos de entrenamiento. Se propone Drive o Kaggle para el paquete compartido; el proveedor, enlace y permisos definitivos están pendientes de acuerdo. El repositorio conservará manifiestos con nombre, tamaño, SHA-256, procedencia, licencia y versión.
+No se versionan TIFF/JP2, pesos ni datos de entrenamiento; se comparten entre las integrantes fuera de Git y se regeneran con los scripts de cada fase. El repositorio conservará manifiestos con nombre, tamaño, SHA-256, procedencia, licencia y versión.
 
 No se activó Git LFS por defecto, para no introducir cuotas como dependencia del proyecto. Las miniaturas de evidencia son pequeñas; no sustituyen los originales.
 
 Los datos Sentinel son abiertos y requieren atribución para sus derivados; la fórmula aplicable es “Contains modified Copernicus Sentinel data [Year]” ([aviso legal Copernicus](https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice)). Hansen GFC 2025 v1.13 se distribuye bajo CC BY 4.0, con crédito Hansen/UMD/Google/USGS/NASA ([distribución](https://storage.googleapis.com/earthenginepartners-hansen/GFC-2025-v1.13/download.html)).
 
-Las demás fuentes y el acceso pendiente a MapBiomas están documentados en `docs/sources.md`. No se concede aún una licencia pública al código: el repositorio sigue privado y esa decisión corresponde a sus autoras.
+Las demás fuentes están documentadas en `docs/sources.md`. Las etiquetas provienen de MapBiomas Chaco Colección 5 (1985–2023, CC BY 4.0). No se concede aún una licencia pública al código: el repositorio sigue privado y esa decisión corresponde a sus autoras.
 
 ## Reproducibilidad y evaluación
 
@@ -154,6 +154,8 @@ Las demás fuentes y el acceso pendiente a MapBiomas están documentados en `doc
 - Sin resultados simulados ni métricas inventadas.
 
 **No realizado** (limitaciones declaradas): referencia visual manual de test, evaluación sobre el par 2026, IoU por clase/mIoU y medición de latencia con repeticiones.
+
+**Por qué 2022→2023:** MapBiomas Chaco Colección 5 llega hasta 2023, y sin etiqueta no se puede medir si el modelo acierta. MapBiomas Paraguay Colección 3 (publicada en septiembre de 2026) cubre 1985–2025, con una leyenda nacional de 10 clases; usarla para un par 2024→2025 es la mejora inmediata. Para 2026 todavía no existe referencia anual.
 
 ## Cómo verificar el estado actual
 
