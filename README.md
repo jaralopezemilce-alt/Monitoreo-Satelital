@@ -2,15 +2,33 @@
 
 Proyecto académico de segmentación bosque/no bosque y detección de pérdida de cobertura entre fechas. Entrega prevista: **9 de noviembre de 2026**; equipo de dos integrantes, presupuesto cero, entrenamiento en GPU gratuita y demo con inferencia en CPU.
 
-## Estado real
+## Estado real (8/11/2026)
 
-**Ingesta multiespectral A/B completada; etiquetas pendientes.** A (Boquerón) y B (Alto Paraguay) están aprobadas y C (Presidente Hayes) queda en reserva. Hay ocho recortes para demo/control y cuatro recortes históricos ampliados, pero todavía no hay dataset etiquetado, pesos entrenados, API ni visor implementados.
+**Sistema completo y funcionando**, con datos reales y sin resultados simulados:
 
-Proyecto Google Cloud compartido informado: `proyecto-deforestacion-510013`. `scripts/fase2_export_mapbiomas.py` permite exportar las etiquetas MapBiomas desde Python con la misma grilla que `export_mapbiomas_pilot.js`, y `scripts/fase2_make_patches.py` corta parches sobre la ingesta histórica (`docs/fase2-dataset.md`). La exportación autenticada real y su auditoría están pendientes; conocer el ID no demuestra permisos efectivos.
+| Componente | Estado | Dónde |
+|---|---|---|
+| Ingesta Sentinel-2 L2A, zonas A (Boquerón) y B (Alto Paraguay), 2022→2023 | Listo | `scripts/prepare_pilot.py`, `manifests/` |
+| Etiquetas MapBiomas Chaco Col. 5 (bosque = clases 3, 4, 6) | Listo | `scripts/fase2_export_mapbiomas.py`, `manifests/mapbiomas-labels-v1.json` |
+| Dataset de parches 128×128 con partición espacial por bloques | Listo | `scripts/fase2_make_patches.py`, `docs/fase2-dataset.md` |
+| U-Net (10 canales) + línea base dNDVI, 3 semillas | Listo | `scripts/fase3_train.py`, `docs/fase3-entrenamiento.md` |
+| Métricas de prueba y matrices de confusión | Listo | **`docs/resultados.md`** |
+| API REST (FastAPI) con inferencia real | Listo | `api/`, `api/README.md` |
+| Visor web (Leaflet, offline) | Listo | `web/`, `web/README.md` |
+| Docker (extra) | Listo | `Dockerfile`, `docker-compose.yml`, `docs/docker.md` |
 
-La generación de parches conserva el dataset anterior si falla y rechaza salidas vacías o sin muestras en train/val/test. Ver `docs/fase2-correcciones.md` para reproducir las comprobaciones y distinguir correcciones de código de validación científica.
+Resultado principal en prueba (modelo desplegado, semilla 42): **IoU 0,663 · F1 0,797** frente a IoU 0,578 · F1 0,733 de la línea base dNDVI. Detalle en `docs/resultados.md`.
 
-Los recortes de inspección no son el dataset final. Las fechas recientes tienen observaciones utilizables, pero la inspección inicial no confirma un desmonte nuevo inequívoco entre mayo y septiembre de 2026; no se presentará un cambio estacional como deforestación.
+## Cómo ejecutar el visor
+
+Requiere en disco `data/interim/historical-inputs-v1`, `data/interim/labels-mapbiomas-v1`, `data/processed/dataset-v1` y `models/unet-v1.pt` (no están en Git; ver "Datos, licencias y pesos").
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-api.txt   # una vez
+.\.venv\Scripts\python.exe -m uvicorn api.main:app --port 8000
+```
+
+o con Docker: `docker compose up --build`. Abrir <http://127.0.0.1:8000/>, elegir zona, **Dibujar área a analizar** (≤ 4 km²) dentro de un bloque de prueba (borde amarillo). La pérdida detectada aparece en rojo, lo no observable en gris. Swagger de la API: <http://127.0.0.1:8000/docs>.
 
 ## Objetivo y alcance
 
@@ -126,15 +144,16 @@ Los datos Sentinel son abiertos y requieren atribución para sus derivados; la f
 
 Las demás fuentes y el acceso pendiente a MapBiomas están documentados en `docs/sources.md`. No se concede aún una licencia pública al código: el repositorio sigue privado y esa decisión corresponde a sus autoras.
 
-## Reproducibilidad y evaluación previstas
+## Reproducibilidad y evaluación
 
-- Semilla inicial 42; configuración y particiones guardadas.
-- Particiones espaciales antes de generar parches; todas las fechas de un bloque en el mismo conjunto.
-- Referencia visual manual de test separada de las pseudoetiquetas de entrenamiento.
-- IoU por clase/mIoU, F1, precision, recall, accuracy y matriz de confusión.
-- Evaluación independiente de la máscara de cambio, no sólo de cada fecha.
-- Tiempo de inferencia en CPU y latencia completa de API, medidos por separado.
+- Semilla oficial 42, fijada antes de evaluar en prueba; semillas 1 y 2 para medir variabilidad.
+- Partición espacial por bloques de 256 px antes de generar parches.
+- Época (mejor IoU de validación) y umbral (mejor F1 de validación) elegidos sólo con validación.
+- IoU, F1, precisión, recall, accuracy y matriz de confusión de la clase pérdida: `docs/resultados.md`.
+- Tiempo de inferencia: medición informal en CPU (ver `docs/resultados.md`).
 - Sin resultados simulados ni métricas inventadas.
+
+**No realizado** (limitaciones declaradas): referencia visual manual de test, evaluación sobre el par 2026, IoU por clase/mIoU y medición de latencia con repeticiones.
 
 ## Cómo verificar el estado actual
 
@@ -144,7 +163,7 @@ Las demás fuentes y el acceso pendiente a MapBiomas están documentados en `doc
 git log --oneline
 ```
 
-Las pruebas actuales validan coordenadas, límites, radiometría, NDVI, máscaras y grillas; **no prueban todavía segmentación, inferencia, API ni interfaz**. Docker Compose y los comandos de entrenamiento se documentarán cuando esas fases estén implementadas y verificadas.
+Las pruebas (`tests/`) cubren coordenadas, radiometría, NDVI, máscaras, dataset, modelo, inferencia, API y servicio del visor. En CI se ejecutan las que no requieren PyTorch/FastAPI y además se construye la imagen Docker con una prueba de humo.
 
 ## Flujo de trabajo del equipo
 
